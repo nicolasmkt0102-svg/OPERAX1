@@ -8,9 +8,33 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f0;color:#1a1a1a;font-size:13px;min-height:100vh}
+ 
+/* AUTH */
+.auth-bg{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f5f5f0;padding:16px}
+.auth-card{background:#fff;border-radius:16px;padding:32px;width:100%;max-width:380px;border:0.5px solid #e0e0d8}
+.auth-logo{font-size:28px;text-align:center;margin-bottom:8px}
+.auth-title{font-size:20px;font-weight:700;text-align:center;color:#1a1a1a;margin-bottom:4px}
+.auth-sub{font-size:13px;color:#888;text-align:center;margin-bottom:24px}
+.auth-field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.auth-field label{font-size:12px;color:#666;font-weight:500}
+.auth-field input{padding:10px 12px;border:0.5px solid #ddd;border-radius:8px;font-size:14px;background:#fff;color:#1a1a1a;outline:none;transition:border .15s}
+.auth-field input:focus{border-color:#185FA5;box-shadow:0 0 0 2px rgba(24,95,165,.1)}
+.auth-btn{width:100%;padding:11px;border:none;border-radius:8px;background:#185FA5;color:#fff;font-size:14px;cursor:pointer;font-weight:600;margin-top:4px;transition:background .15s}
+.auth-btn:hover{background:#0C447C}
+.auth-switch{text-align:center;margin-top:16px;font-size:13px;color:#888}
+.auth-switch a{color:#185FA5;cursor:pointer;font-weight:500;text-decoration:none}
+.auth-switch a:hover{text-decoration:underline}
+.auth-error{background:#FCEBEB;border:0.5px solid #F09595;border-radius:8px;padding:10px 12px;font-size:12px;color:#791F1F;margin-bottom:14px;display:none}
+.auth-error.show{display:block}
+.auth-success{background:#EAF3DE;border:0.5px solid #97C459;border-radius:8px;padding:10px 12px;font-size:12px;color:#27500A;margin-bottom:14px;display:none}
+.auth-success.show{display:block}
+ 
+/* DASHBOARD */
 .topbar{background:#fff;border-bottom:0.5px solid #e0e0d8;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
 .topbar-title{font-size:15px;font-weight:600;color:#1a1a1a}
 .topbar-sub{font-size:11px;color:#888;margin-top:1px}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.user-badge{font-size:12px;color:#666;background:#f0efe8;padding:4px 10px;border-radius:20px}
 .main{max-width:1100px;margin:0 auto;padding:20px 16px}
 .nav{display:flex;gap:3px;background:#ebebeb;padding:3px;border-radius:10px;margin-bottom:20px;flex-wrap:wrap}
 .ntab{flex:1;min-width:80px;padding:7px 8px;border:none;background:transparent;border-radius:8px;font-size:12px;cursor:pointer;color:#666;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:4px}
@@ -27,8 +51,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .mc-roi .mc-lbl{color:#185FA5}.mc-roi .mc-val{color:#042C53;font-weight:600;font-size:19px}
 .mc-gasto{background:#FCEBEB;border-radius:8px;padding:14px;border:0.5px solid #F09595}
 .mc-gasto .mc-lbl{color:#A32D2D}.mc-gasto .mc-val{color:#501313;font-weight:600;font-size:19px}
-.mc-caixa{background:#EEEDFE;border-radius:8px;padding:14px;border:0.5px solid #AFA9EC}
-.mc-caixa .mc-lbl{color:#3C3489}.mc-caixa .mc-val{color:#26215C;font-weight:600;font-size:21px}
 .card{background:#fff;border:0.5px solid #e0e0d8;border-radius:12px;overflow:hidden;margin-bottom:16px}
 .card-head{padding:12px 16px;border-bottom:0.5px solid #e0e0d8;display:flex;align-items:center;justify-content:space-between;background:#fafafa}
 .card-title{font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.05em}
@@ -50,19 +72,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .btn:hover{background:#f5f5f0}
 .btn-primary{background:#185FA5;color:#fff;border-color:#185FA5}
 .btn-primary:hover{background:#0C447C}
+.btn-danger{background:transparent;border:0.5px solid #ddd;color:#888;cursor:pointer;font-size:12px;padding:5px 12px;border-radius:8px;transition:all .15s}
+.btn-danger:hover{background:#FCEBEB;color:#791F1F;border-color:#F09595}
 .btn-icon{border:none;background:transparent;cursor:pointer;padding:3px 5px;border-radius:5px;font-size:13px;transition:all .15s;color:#aaa}
-.btn-icon:hover{background:#f0f0e8;color:#1a1a1a}
-.btn-edit{color:#185FA5}.btn-edit:hover{background:#E6F1FB;color:#0C447C}
-.btn-del{color:#aaa}.btn-del:hover{background:#FCEBEB;color:#791F1F}
-.actions{display:flex;gap:2px;justify-content:flex-end;white-space:nowrap}
+.btn-icon:hover{background:#f0f0e8}
+.btn-edit:hover{background:#E6F1FB;color:#0C447C}
+.btn-del:hover{background:#FCEBEB;color:#791F1F}
+.actions{display:flex;gap:2px;justify-content:flex-end}
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;padding:16px}
 .overlay.show{display:flex}
 .modal{background:#fff;border-radius:16px;padding:24px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.15);max-height:90vh;overflow-y:auto}
 .modal-title{font-size:15px;font-weight:600;color:#1a1a1a;margin-bottom:16px}
 .field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
 .field label{font-size:12px;color:#666;font-weight:500}
-.field input,.field select,.field textarea{padding:8px 10px;border:0.5px solid #ddd;border-radius:8px;font-size:13px;background:#fff;color:#1a1a1a;outline:none;font-family:inherit}
-.field input:focus,.field select:focus,.field textarea:focus{border-color:#185FA5;box-shadow:0 0 0 2px rgba(24,95,165,.1)}
+.field input,.field select{padding:8px 10px;border:0.5px solid #ddd;border-radius:8px;font-size:13px;background:#fff;color:#1a1a1a;outline:none}
+.field input:focus,.field select:focus{border-color:#185FA5;box-shadow:0 0 0 2px rgba(24,95,165,.1)}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 .modal-btns{display:flex;gap:8px;margin-top:16px}
@@ -82,157 +106,193 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </head>
 <body>
  
-<div class="topbar">
-  <div>
-    <div class="topbar-title">⚡ Painel de Operação</div>
-    <div class="topbar-sub" id="topbar-sub">Meta Ads + WhatsApp</div>
-  </div>
-  <button class="btn btn-primary" onclick="openModal('lancamento')">+ Lançar dia</button>
-</div>
- 
-<div class="main">
-  <div class="nav">
-    <button class="ntab on" onclick="goTab('hoje',this)">📊 Hoje</button>
-    <button class="ntab" onclick="goTab('relatorios',this)">📋 Relatórios</button>
-    <button class="ntab" onclick="goTab('simulador',this)">🧮 Simulador</button>
-    <button class="ntab" onclick="goTab('financeiro',this)">💰 Financeiro</button>
-    <button class="ntab" onclick="goTab('caixa',this)">🏦 Caixa</button>
-  </div>
- 
-  <div id="pane-hoje" class="pane on">
-    <div class="metrics" id="hoje-metrics"><div class="empty">Carregando...</div></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
-      <div class="card">
-        <div class="card-head"><span class="card-title">Faturamento — 7 dias</span></div>
-        <div style="padding:12px 16px">
-          <div class="bar-wrap" id="fat-bars"></div>
-          <div style="display:flex;gap:4px;margin-top:4px" id="fat-labels"></div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-head"><span class="card-title">Indicadores do período</span></div>
-        <div style="padding:12px 16px;display:flex;flex-direction:column;gap:8px" id="mes-kpis"></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-head"><span class="card-title">Últimos 7 dias</span></div>
-      <div style="overflow-x:auto">
-        <table class="tbl" style="min-width:640px">
-          <thead><tr>
-            <th style="width:9%">Data</th><th style="width:10%">Gasto</th><th style="width:7%">Leads</th>
-            <th style="width:8%">CPL</th><th style="width:7%">Vendas</th><th style="width:8%">CPA</th>
-            <th style="width:13%">Faturamento</th><th style="width:8%">ROI</th><th style="width:8%">Conv.</th>
-            <th style="width:10%;text-align:right">Ações</th>
-          </tr></thead>
-          <tbody id="hoje-table"></tbody>
-        </table>
-      </div>
-      <div class="fat-strip" id="fat-strip-hoje"></div>
-    </div>
-  </div>
- 
-  <div id="pane-relatorios" class="pane">
-    <div class="period-tabs">
-      <button class="ptab on" onclick="setPeriod(7,this)">7 dias</button>
-      <button class="ptab" onclick="setPeriod(15,this)">15 dias</button>
-      <button class="ptab" onclick="setPeriod(30,this)">30 dias</button>
-    </div>
-    <div class="metrics" id="rel-metrics"></div>
-    <div class="card">
-      <div class="card-head">
-        <span class="card-title" id="rel-title">Relatório — 7 dias</span>
-        <select id="rel-filter" onchange="renderRel()" style="font-size:12px;padding:4px 8px;border-radius:8px;border:0.5px solid #ddd">
-          <option value="todos">Todos</option>
-          <option value="bom">ROI positivo</option>
-          <option value="ruim">ROI negativo</option>
-        </select>
-      </div>
-      <div style="overflow-x:auto">
-        <table class="tbl" style="min-width:640px">
-          <thead><tr>
-            <th style="width:9%">Data</th><th style="width:10%">Gasto</th><th style="width:7%">Leads</th>
-            <th style="width:8%">CPL</th><th style="width:7%">Vendas</th><th style="width:8%">CPA</th>
-            <th style="width:13%">Faturamento</th><th style="width:8%">ROI</th><th style="width:8%">Conv.</th>
-            <th style="width:10%;text-align:right">Ações</th>
-          </tr></thead>
-          <tbody id="rel-table"></tbody>
-        </table>
-      </div>
-      <div class="fat-strip" id="fat-strip-rel"></div>
-    </div>
-  </div>
- 
-  <div id="pane-simulador" class="pane">
-    <div class="card">
-      <div class="card-head"><span class="card-title">Simulador de faturamento</span></div>
-      <div style="padding:16px">
-        <div class="row2" style="margin-bottom:12px">
-          <div class="field" style="margin:0"><label>Gasto com Ads (R$)</label><input type="number" id="sim-gasto" value="500" min="0" step="10" oninput="calcSim()"></div>
-          <div class="field" style="margin:0"><label>CPL — custo por lead (R$)</label><input type="number" id="sim-cpl" value="8" min="0.1" step="0.5" oninput="calcSim()"></div>
-        </div>
-        <div class="row2" style="margin-bottom:16px">
-          <div class="field" style="margin:0"><label>Taxa de conversão (%)</label><input type="number" id="sim-conv" value="15" min="1" max="100" step="1" oninput="calcSim()"></div>
-          <div class="field" style="margin:0"><label>Ticket médio (R$)</label><input type="number" id="sim-ticket" value="97" min="1" step="1" oninput="calcSim()"></div>
-        </div>
-        <div style="border-top:0.5px solid #e0e0d8;padding-top:16px;display:flex;flex-direction:column;gap:6px" id="sim-results"></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-head"><span class="card-title">Projeção reversa — meta de faturamento</span></div>
-      <div style="padding:16px">
-        <div class="field"><label>Meta de faturamento (R$)</label><input type="number" id="sim-meta" value="10000" min="100" step="100" oninput="calcMeta()"></div>
-        <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px" id="meta-results"></div>
-      </div>
-    </div>
-  </div>
- 
-  <div id="pane-financeiro" class="pane">
-    <div class="metrics" id="fin-metrics"></div>
-    <div class="card">
-      <div class="card-head">
-        <span class="card-title">Despesas fixas</span>
-        <button class="btn" onclick="openModal('despesa')">+ Adicionar</button>
-      </div>
-      <div id="despesas-list"></div>
-    </div>
-    <div class="card">
-      <div class="card-head"><span class="card-title">Resumo financeiro</span></div>
-      <div style="padding:16px;display:flex;flex-direction:column;gap:2px" id="resumo-mes"></div>
-    </div>
-  </div>
- 
-  <div id="pane-caixa" class="pane">
-    <div class="caixa-saldo">
-      <div>
-        <div style="font-size:12px;color:#3C3489;font-weight:600;margin-bottom:4px">🏦 Saldo total do caixa</div>
-        <div style="font-size:30px;font-weight:700;color:#26215C" id="caixa-saldo-val">R$ 0,00</div>
-        <div style="font-size:11px;color:#534AB7;margin-top:3px" id="caixa-saldo-sub"></div>
-      </div>
-      <button class="btn btn-primary" onclick="openModal('caixa')">+ Lançar</button>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
-      <div class="mc-fat"><div class="mc-lbl">Total entradas</div><div class="mc-val" id="caixa-total-in">R$ 0,00</div></div>
-      <div class="mc-gasto"><div class="mc-lbl">Total saídas</div><div class="mc-val" id="caixa-total-out">R$ 0,00</div></div>
-    </div>
-    <div class="card">
-      <div class="card-head"><span class="card-title">Movimentações</span></div>
-      <div style="overflow-x:auto">
-        <table class="tbl">
-          <thead><tr>
-            <th style="width:10%">Data</th>
-            <th style="width:34%">Descrição</th>
-            <th style="width:18%">Categoria</th>
-            <th style="width:20%;text-align:right">Valor</th>
-            <th style="width:18%;text-align:right">Ações</th>
-          </tr></thead>
-          <tbody id="caixa-list"></tbody>
-        </table>
-      </div>
-    </div>
+<!-- TELA DE LOGIN -->
+<div id="screen-login" class="auth-bg">
+  <div class="auth-card">
+    <div class="auth-logo">⚡</div>
+    <div class="auth-title">Painel de Operação</div>
+    <div class="auth-sub">Entre com sua conta para acessar</div>
+    <div class="auth-error" id="login-error"></div>
+    <div class="auth-field"><label>E-mail</label><input type="email" id="login-email" placeholder="seu@email.com"></div>
+    <div class="auth-field"><label>Senha</label><input type="password" id="login-senha" placeholder="••••••••" onkeydown="if(event.key==='Enter')fazerLogin()"></div>
+    <button class="auth-btn" onclick="fazerLogin()">Entrar</button>
+    <div class="auth-switch">Não tem conta? <a onclick="mostrarTela('cadastro')">Cadastre-se</a></div>
   </div>
 </div>
  
-<!-- MODAL LANÇAR / EDITAR DIA -->
+<!-- TELA DE CADASTRO -->
+<div id="screen-cadastro" class="auth-bg" style="display:none">
+  <div class="auth-card">
+    <div class="auth-logo">⚡</div>
+    <div class="auth-title">Criar conta</div>
+    <div class="auth-sub">Preencha os dados para se cadastrar</div>
+    <div class="auth-error" id="cadastro-error"></div>
+    <div class="auth-success" id="cadastro-success"></div>
+    <div class="auth-field"><label>Seu nome</label><input type="text" id="cadastro-nome" placeholder="Seu nome"></div>
+    <div class="auth-field"><label>E-mail</label><input type="email" id="cadastro-email" placeholder="seu@email.com"></div>
+    <div class="auth-field"><label>Senha</label><input type="password" id="cadastro-senha" placeholder="Mínimo 6 caracteres"></div>
+    <div class="auth-field"><label>Confirmar senha</label><input type="password" id="cadastro-confirma" placeholder="Repita a senha" onkeydown="if(event.key==='Enter')fazerCadastro()"></div>
+    <button class="auth-btn" onclick="fazerCadastro()">Criar conta</button>
+    <div class="auth-switch">Já tem conta? <a onclick="mostrarTela('login')">Entrar</a></div>
+  </div>
+</div>
+ 
+<!-- DASHBOARD -->
+<div id="screen-dashboard" style="display:none">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">⚡ Painel de Operação</div>
+      <div class="topbar-sub" id="topbar-sub">Meta Ads + WhatsApp</div>
+    </div>
+    <div class="topbar-right">
+      <span class="user-badge" id="user-nome">👤</span>
+      <button class="btn-danger" onclick="sair()">Sair</button>
+      <button class="btn btn-primary" onclick="openModal('lancamento')">+ Lançar dia</button>
+    </div>
+  </div>
+ 
+  <div class="main">
+    <div class="nav">
+      <button class="ntab on" onclick="goTab('hoje',this)">📊 Hoje</button>
+      <button class="ntab" onclick="goTab('relatorios',this)">📋 Relatórios</button>
+      <button class="ntab" onclick="goTab('simulador',this)">🧮 Simulador</button>
+      <button class="ntab" onclick="goTab('financeiro',this)">💰 Financeiro</button>
+      <button class="ntab" onclick="goTab('caixa',this)">🏦 Caixa</button>
+    </div>
+ 
+    <div id="pane-hoje" class="pane on">
+      <div class="metrics" id="hoje-metrics"><div class="empty">Carregando...</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div class="card">
+          <div class="card-head"><span class="card-title">Faturamento — 7 dias</span></div>
+          <div style="padding:12px 16px">
+            <div class="bar-wrap" id="fat-bars"></div>
+            <div style="display:flex;gap:4px;margin-top:4px" id="fat-labels"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><span class="card-title">Indicadores do período</span></div>
+          <div style="padding:12px 16px;display:flex;flex-direction:column;gap:8px" id="mes-kpis"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Últimos 7 dias</span></div>
+        <div style="overflow-x:auto">
+          <table class="tbl" style="min-width:640px">
+            <thead><tr>
+              <th style="width:9%">Data</th><th style="width:10%">Gasto</th><th style="width:7%">Leads</th>
+              <th style="width:8%">CPL</th><th style="width:7%">Vendas</th><th style="width:8%">CPA</th>
+              <th style="width:13%">Faturamento</th><th style="width:8%">ROI</th><th style="width:8%">Conv.</th>
+              <th style="width:10%;text-align:right">Ações</th>
+            </tr></thead>
+            <tbody id="hoje-table"></tbody>
+          </table>
+        </div>
+        <div class="fat-strip" id="fat-strip-hoje"></div>
+      </div>
+    </div>
+ 
+    <div id="pane-relatorios" class="pane">
+      <div class="period-tabs">
+        <button class="ptab on" onclick="setPeriod(7,this)">7 dias</button>
+        <button class="ptab" onclick="setPeriod(15,this)">15 dias</button>
+        <button class="ptab" onclick="setPeriod(30,this)">30 dias</button>
+      </div>
+      <div class="metrics" id="rel-metrics"></div>
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title" id="rel-title">Relatório — 7 dias</span>
+          <select id="rel-filter" onchange="renderRel()" style="font-size:12px;padding:4px 8px;border-radius:8px;border:0.5px solid #ddd">
+            <option value="todos">Todos</option>
+            <option value="bom">ROI positivo</option>
+            <option value="ruim">ROI negativo</option>
+          </select>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="tbl" style="min-width:640px">
+            <thead><tr>
+              <th style="width:9%">Data</th><th style="width:10%">Gasto</th><th style="width:7%">Leads</th>
+              <th style="width:8%">CPL</th><th style="width:7%">Vendas</th><th style="width:8%">CPA</th>
+              <th style="width:13%">Faturamento</th><th style="width:8%">ROI</th><th style="width:8%">Conv.</th>
+              <th style="width:10%;text-align:right">Ações</th>
+            </tr></thead>
+            <tbody id="rel-table"></tbody>
+          </table>
+        </div>
+        <div class="fat-strip" id="fat-strip-rel"></div>
+      </div>
+    </div>
+ 
+    <div id="pane-simulador" class="pane">
+      <div class="card">
+        <div class="card-head"><span class="card-title">Simulador de faturamento</span></div>
+        <div style="padding:16px">
+          <div class="row2" style="margin-bottom:12px">
+            <div class="field" style="margin:0"><label>Gasto com Ads (R$)</label><input type="number" id="sim-gasto" value="500" min="0" step="10" oninput="calcSim()"></div>
+            <div class="field" style="margin:0"><label>CPL — custo por lead (R$)</label><input type="number" id="sim-cpl" value="8" min="0.1" step="0.5" oninput="calcSim()"></div>
+          </div>
+          <div class="row2" style="margin-bottom:16px">
+            <div class="field" style="margin:0"><label>Taxa de conversão (%)</label><input type="number" id="sim-conv" value="15" min="1" max="100" step="1" oninput="calcSim()"></div>
+            <div class="field" style="margin:0"><label>Ticket médio (R$)</label><input type="number" id="sim-ticket" value="97" min="1" step="1" oninput="calcSim()"></div>
+          </div>
+          <div style="border-top:0.5px solid #e0e0d8;padding-top:16px;display:flex;flex-direction:column;gap:6px" id="sim-results"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Projeção reversa — meta de faturamento</span></div>
+        <div style="padding:16px">
+          <div class="field"><label>Meta de faturamento (R$)</label><input type="number" id="sim-meta" value="10000" min="100" step="100" oninput="calcMeta()"></div>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px" id="meta-results"></div>
+        </div>
+      </div>
+    </div>
+ 
+    <div id="pane-financeiro" class="pane">
+      <div class="metrics" id="fin-metrics"></div>
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">Despesas fixas</span>
+          <button class="btn" onclick="openModal('despesa')">+ Adicionar</button>
+        </div>
+        <div id="despesas-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Resumo financeiro</span></div>
+        <div style="padding:16px;display:flex;flex-direction:column;gap:2px" id="resumo-mes"></div>
+      </div>
+    </div>
+ 
+    <div id="pane-caixa" class="pane">
+      <div class="caixa-saldo">
+        <div>
+          <div style="font-size:12px;color:#3C3489;font-weight:600;margin-bottom:4px">🏦 Saldo total do caixa</div>
+          <div style="font-size:30px;font-weight:700;color:#26215C" id="caixa-saldo-val">R$ 0,00</div>
+          <div style="font-size:11px;color:#534AB7;margin-top:3px" id="caixa-saldo-sub"></div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('caixa')">+ Lançar</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+        <div class="mc-fat"><div class="mc-lbl">Total entradas</div><div class="mc-val" id="caixa-total-in">R$ 0,00</div></div>
+        <div class="mc-gasto"><div class="mc-lbl">Total saídas</div><div class="mc-val" id="caixa-total-out">R$ 0,00</div></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Movimentações</span></div>
+        <div style="overflow-x:auto">
+          <table class="tbl">
+            <thead><tr>
+              <th style="width:10%">Data</th><th style="width:34%">Descrição</th>
+              <th style="width:18%">Categoria</th><th style="width:20%;text-align:right">Valor</th>
+              <th style="width:18%;text-align:right">Ações</th>
+            </tr></thead>
+            <tbody id="caixa-list"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+<!-- MODAIS -->
 <div class="overlay" id="overlay-lancamento">
   <div class="modal">
     <div class="modal-title" id="lancamento-title">Lançar dia</div>
@@ -252,7 +312,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
  
-<!-- MODAL DESPESA -->
 <div class="overlay" id="overlay-despesa">
   <div class="modal">
     <div class="modal-title" id="despesa-title">Nova despesa fixa</div>
@@ -265,14 +324,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
  
-<!-- MODAL CAIXA -->
 <div class="overlay" id="overlay-caixa">
   <div class="modal">
     <div class="modal-title" id="caixa-title">Lançar movimentação</div>
     <div class="field"><label>Tipo</label>
       <select id="cf-tipo"><option value="in">Entrada (receita)</option><option value="out">Saída (gasto)</option></select>
     </div>
-    <div class="field"><label>Descrição</label><input type="text" id="cf-desc" placeholder="Ex: Venda produto X, Aluguel..."></div>
+    <div class="field"><label>Descrição</label><input type="text" id="cf-desc" placeholder="Ex: Venda produto X..."></div>
     <div class="row2">
       <div class="field"><label>Categoria</label>
         <select id="cf-cat"><option>Venda</option><option>Investimento Ads</option><option>Despesa fixa</option><option>Ferramenta</option><option>Saque</option><option>Outros</option></select>
@@ -298,33 +356,96 @@ const fR = v => 'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,
 const pct = v => Number(v).toFixed(1)+'%';
  
 let dias=[], despesas=[], movCaixa=[], curPeriod=7;
-let editingId = { lancamento: null, despesa: null, caixa: null };
+let editingId = {lancamento:null, despesa:null, caixa:null};
+let usuarioLogado = null;
  
-async function loadAll() {
+// ============ AUTH ============
+function mostrarTela(t){
+  document.getElementById('screen-login').style.display = t==='login'?'flex':'none';
+  document.getElementById('screen-cadastro').style.display = t==='cadastro'?'flex':'none';
+  document.getElementById('screen-dashboard').style.display = t==='dashboard'?'block':'none';
+}
+ 
+function hashSenha(s){ let h=0; for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;} return Math.abs(h).toString(16); }
+ 
+async function fazerLogin(){
+  const email = document.getElementById('login-email').value.trim();
+  const senha = document.getElementById('login-senha').value;
+  const err = document.getElementById('login-error');
+  err.classList.remove('show');
+  if(!email||!senha){ err.textContent='Preencha e-mail e senha.'; err.classList.add('show'); return; }
+  const hash = hashSenha(senha);
+  const {data,error} = await sb.from('usuarios').select('*').eq('email',email).eq('senha',hash).single();
+  if(error||!data){ err.textContent='E-mail ou senha incorretos.'; err.classList.add('show'); return; }
+  usuarioLogado = data;
+  localStorage.setItem('painel_user', JSON.stringify(data));
+  entrarDashboard();
+}
+ 
+async function fazerCadastro(){
+  const nome = document.getElementById('cadastro-nome').value.trim();
+  const email = document.getElementById('cadastro-email').value.trim();
+  const senha = document.getElementById('cadastro-senha').value;
+  const confirma = document.getElementById('cadastro-confirma').value;
+  const err = document.getElementById('cadastro-error');
+  const suc = document.getElementById('cadastro-success');
+  err.classList.remove('show'); suc.classList.remove('show');
+  if(!nome||!email||!senha){ err.textContent='Preencha todos os campos.'; err.classList.add('show'); return; }
+  if(senha.length<6){ err.textContent='A senha precisa ter pelo menos 6 caracteres.'; err.classList.add('show'); return; }
+  if(senha!==confirma){ err.textContent='As senhas não coincidem.'; err.classList.add('show'); return; }
+  const hash = hashSenha(senha);
+  const {error} = await sb.from('usuarios').insert({nome,email,senha:hash});
+  if(error){
+    if(error.code==='23505'){ err.textContent='Este e-mail já está cadastrado.'; }
+    else { err.textContent='Erro ao cadastrar. Tente novamente.'; }
+    err.classList.add('show'); return;
+  }
+  suc.textContent='Conta criada com sucesso! Faça o login.';
+  suc.classList.add('show');
+  setTimeout(()=>mostrarTela('login'), 2000);
+}
+ 
+function entrarDashboard(){
+  mostrarTela('dashboard');
+  document.getElementById('user-nome').textContent = '👤 '+usuarioLogado.nome;
+  const d=new Date();
+  document.getElementById('topbar-sub').textContent = d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+  loadAll();
+}
+ 
+function sair(){
+  localStorage.removeItem('painel_user');
+  usuarioLogado=null;
+  mostrarTela('login');
+}
+ 
+// Verificar sessão salva
+const saved = localStorage.getItem('painel_user');
+if(saved){ try{ usuarioLogado=JSON.parse(saved); entrarDashboard(); }catch(e){ mostrarTela('login'); } }
+else { mostrarTela('login'); }
+ 
+// ============ DADOS ============
+async function loadAll(){
   const [d,de,c] = await Promise.all([
     sb.from('dias').select('*').order('created_at',{ascending:false}),
     sb.from('despesas').select('*').order('created_at',{ascending:false}),
     sb.from('caixa').select('*').order('created_at',{ascending:false}),
   ]);
-  dias = d.data||[];
-  despesas = de.data||[];
-  movCaixa = c.data||[];
-  const d2=new Date();
-  document.getElementById('topbar-sub').textContent = d2.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+  dias=d.data||[]; despesas=de.data||[]; movCaixa=c.data||[];
   renderHoje();
 }
  
 const calc = d => {
-  const cpl  = d.leads>0  ? d.gasto/d.leads  : 0;
-  const cpa  = d.vendas>0 ? d.gasto/d.vendas : 0;
-  const roi  = d.gasto>0  ? ((d.fat-d.gasto)/d.gasto)*100 : 0;
-  const conv = d.leads>0  ? (d.vendas/d.leads)*100 : 0;
+  const cpl=d.leads>0?d.gasto/d.leads:0;
+  const cpa=d.vendas>0?d.gasto/d.vendas:0;
+  const roi=d.gasto>0?((d.fat-d.gasto)/d.gasto)*100:0;
+  const conv=d.leads>0?(d.vendas/d.leads)*100:0;
   return {...d,cpl,cpa,roi,conv};
 };
 const roiBadge = roi => roi>=100?'b-ok':roi>=0?'b-warn':'b-bad';
 const roiLabel = roi => roi>=100?'Excelente':roi>=0?'Positivo':'Negativo';
  
-function rowHtml(d) {
+function rowHtml(d){
   const c=calc(d);
   return `<tr>
     <td>${c.data}</td>
@@ -340,14 +461,14 @@ function rowHtml(d) {
   </tr>`;
 }
  
-function fatStrip(lista) {
+function fatStrip(lista){
   const tF=lista.reduce((s,d)=>s+Number(d.fat),0);
   const tG=lista.reduce((s,d)=>s+Number(d.gasto),0);
   const roi=tG>0?((tF-tG)/tG)*100:0;
   return `<span style="font-size:12px;color:#3B6D11;font-weight:600">📈 Total faturado: <strong style="font-size:15px">${fR(tF)}</strong></span><span style="font-size:12px;color:#3B6D11">ROI médio: <strong>${Math.round(roi)}%</strong></span>`;
 }
  
-function metricsHtml(lista) {
+function metricsHtml(lista){
   const tG=lista.reduce((s,d)=>s+Number(d.gasto),0);
   const tF=lista.reduce((s,d)=>s+Number(d.fat),0);
   const tL=lista.reduce((s,d)=>s+Number(d.leads),0);
@@ -366,7 +487,7 @@ function metricsHtml(lista) {
   ].map(m=>`<div class="${m.cls}"><div class="mc-lbl">${m.lbl}</div><div class="mc-val">${m.val}</div></div>`).join('');
 }
  
-function renderHoje() {
+function renderHoje(){
   if(!dias.length){
     document.getElementById('hoje-metrics').innerHTML='<div style="grid-column:1/-1" class="empty">Nenhum dado ainda. Clique em "+ Lançar dia" para começar!</div>';
     ['hoje-table','fat-strip-hoje','fat-bars','fat-labels','mes-kpis'].forEach(id=>document.getElementById(id).innerHTML='');
@@ -414,8 +535,7 @@ function renderHoje() {
 function setPeriod(n,el){
   curPeriod=n;
   document.querySelectorAll('.ptab').forEach(t=>t.classList.remove('on'));
-  el.classList.add('on');
-  renderRel();
+  el.classList.add('on'); renderRel();
 }
  
 function renderRel(){
@@ -492,16 +612,16 @@ function renderFinanceiro(){
           <button class="btn-icon btn-del" onclick="deleteDespesa('${d.id}')" title="Excluir">🗑️</button>
         </div>
       </div>`).join('')
-    : '<div class="empty">Nenhuma despesa fixa cadastrada.</div>';
+    : '<div class="empty">Nenhuma despesa cadastrada.</div>';
  
-  const mBruta=tFat>0?((tFat-tGasto)/tFat)*100:0;
-  const mLiq=tFat>0?(lucro/tFat)*100:0;
+  const mB=tFat>0?((tFat-tGasto)/tFat)*100:0;
+  const mL=tFat>0?(lucro/tFat)*100:0;
   document.getElementById('resumo-mes').innerHTML=[
     {k:'Faturamento bruto',v:fR(tFat),grn:true},
     {k:'(-) Gasto com ads',v:fR(tGasto),red:true},
-    {k:'= Margem bruta',v:`${fR(tFat-tGasto)} (${Math.round(mBruta)}%)`},
+    {k:'= Margem bruta',v:`${fR(tFat-tGasto)} (${Math.round(mB)}%)`},
     {k:'(-) Despesas fixas',v:fR(tDesp),red:true},
-    {k:'= Lucro líquido',v:`${fR(lucro)} (${Math.round(mLiq)}%)`,bold:true,grn:lucro>=0,red:lucro<0},
+    {k:'= Lucro líquido',v:`${fR(lucro)} (${Math.round(mL)}%)`,bold:true,grn:lucro>=0,red:lucro<0},
   ].map(m=>`<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:0.5px solid #f0f0e8;font-size:13px${m.bold?';background:#EAF3DE;margin:0 -16px;padding:10px 16px;border-top:0.5px solid #97C459':''}">
     <span style="color:#888">${m.k}</span>
     <span style="font-weight:${m.bold?700:400};color:${m.grn?'#27500A':m.red?'#791F1F':'#1a1a1a'}">${m.v}</span>
@@ -509,17 +629,16 @@ function renderFinanceiro(){
 }
  
 function renderCaixa(){
-  const totalIn=movCaixa.filter(m=>m.tipo==='in').reduce((s,m)=>s+Number(m.val),0);
-  const totalOut=movCaixa.filter(m=>m.tipo==='out').reduce((s,m)=>s+Number(m.val),0);
-  const saldo=totalIn-totalOut;
+  const tIn=movCaixa.filter(m=>m.tipo==='in').reduce((s,m)=>s+Number(m.val),0);
+  const tOut=movCaixa.filter(m=>m.tipo==='out').reduce((s,m)=>s+Number(m.val),0);
+  const saldo=tIn-tOut;
   document.getElementById('caixa-saldo-val').textContent=fR(saldo);
   document.getElementById('caixa-saldo-sub').textContent=`${movCaixa.length} movimentações · ${saldo>=0?'Saldo positivo ✅':'Saldo negativo ⚠️'}`;
-  document.getElementById('caixa-total-in').textContent=fR(totalIn);
-  document.getElementById('caixa-total-out').textContent=fR(totalOut);
+  document.getElementById('caixa-total-in').textContent=fR(tIn);
+  document.getElementById('caixa-total-out').textContent=fR(tOut);
   document.getElementById('caixa-list').innerHTML=movCaixa.length
     ? movCaixa.map(m=>`<tr>
-        <td style="color:#888">${m.data}</td>
-        <td>${m.descricao}</td>
+        <td style="color:#888">${m.data}</td><td>${m.descricao}</td>
         <td><span class="badge ${m.tipo==='in'?'b-in':'b-out'}">${m.cat}</span></td>
         <td style="text-align:right;font-weight:600;color:${m.tipo==='in'?'#27500A':'#791F1F'}">${m.tipo==='in'?'+':'-'} ${fR(m.val)}</td>
         <td><div class="actions">
@@ -527,7 +646,7 @@ function renderCaixa(){
           <button class="btn-icon btn-del" onclick="deleteCaixa('${m.id}')" title="Excluir">🗑️</button>
         </div></td>
       </tr>`).join('')
-    : '<tr><td colspan="5" class="empty">Nenhuma movimentação ainda.</td></tr>';
+    : '<tr><td colspan="5" class="empty">Nenhuma movimentação.</td></tr>';
 }
  
 function goTab(name,el){
@@ -544,8 +663,9 @@ function goTab(name,el){
  
 function openModal(t){
   editingId[t]=null;
-  document.getElementById(`${t}-title`).textContent = t==='lancamento'?'Lançar dia':t==='despesa'?'Nova despesa fixa':'Lançar movimentação';
-  document.getElementById(`${t}-btn`).textContent = 'Salvar';
+  const titles={lancamento:'Lançar dia',despesa:'Nova despesa fixa',caixa:'Lançar movimentação'};
+  document.getElementById(`${t}-title`).textContent=titles[t];
+  document.getElementById(`${t}-btn`).textContent='Salvar';
   document.getElementById('overlay-'+t).classList.add('show');
   const d=new Date();
   if(t==='lancamento') document.getElementById('lf-data').value=d.toISOString().split('T')[0];
@@ -554,14 +674,13 @@ function openModal(t){
 function closeModal(t){ document.getElementById('overlay-'+t).classList.remove('show'); }
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
  
-// EDITAR DIA
 function editDia(id){
   const d=dias.find(x=>x.id===id); if(!d) return;
   editingId.lancamento=id;
   document.getElementById('lancamento-title').textContent='Editar lançamento';
   document.getElementById('lancamento-btn').textContent='Atualizar';
-  const parts=d.data.split('/');
-  document.getElementById('lf-data').value=`2026-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+  const p=d.data.split('/');
+  document.getElementById('lf-data').value=`2026-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
   document.getElementById('lf-gasto').value=d.gasto;
   document.getElementById('lf-leads').value=d.leads;
   document.getElementById('lf-vendas').value=d.vendas;
@@ -578,29 +697,23 @@ async function saveDia(){
   if(!dataRaw||gasto===0){ toast('Preencha data e gasto!'); return; }
   const d=new Date(dataRaw+'T12:00:00');
   const data=(d.getDate()).toString().padStart(2,'0')+'/'+(d.getMonth()+1).toString().padStart(2,'0');
- 
   if(editingId.lancamento){
-    const {error}=await sb.from('dias').update({data,gasto,leads,vendas,fat}).eq('id',editingId.lancamento);
-    if(error){ toast('Erro ao atualizar!'); return; }
+    await sb.from('dias').update({data,gasto,leads,vendas,fat}).eq('id',editingId.lancamento);
     toast('✅ Lançamento atualizado!');
   } else {
-    const {error}=await sb.from('dias').insert({data,gasto,leads,vendas,fat});
-    if(error){ toast('Erro ao salvar!'); return; }
-    toast('✅ Dia lançado com sucesso!');
+    await sb.from('dias').insert({data,gasto,leads,vendas,fat});
+    toast('✅ Dia lançado!');
   }
   ['lf-gasto','lf-leads','lf-vendas','lf-fat'].forEach(id=>document.getElementById(id).value='');
-  closeModal('lancamento');
-  await loadAll();
+  closeModal('lancamento'); await loadAll();
 }
  
 async function deleteDia(id){
   if(!confirm('Excluir esse lançamento?')) return;
   await sb.from('dias').delete().eq('id',id);
-  await loadAll();
-  toast('Lançamento excluído.');
+  await loadAll(); toast('Lançamento excluído.');
 }
  
-// EDITAR DESPESA
 function editDespesa(id){
   const d=despesas.find(x=>x.id===id); if(!d) return;
   editingId.despesa=id;
@@ -615,7 +728,6 @@ async function saveDespesa(){
   const descricao=document.getElementById('df-desc').value.trim();
   const val=parseFloat(document.getElementById('df-val').value)||0;
   if(!descricao){ toast('Preencha a descrição!'); return; }
- 
   if(editingId.despesa){
     await sb.from('despesas').update({descricao,val}).eq('id',editingId.despesa);
     toast('✅ Despesa atualizada!');
@@ -627,20 +739,16 @@ async function saveDespesa(){
   document.getElementById('df-val').value='';
   closeModal('despesa');
   const {data}=await sb.from('despesas').select('*').order('created_at',{ascending:false});
-  despesas=data||[];
-  renderFinanceiro();
+  despesas=data||[]; renderFinanceiro();
 }
  
 async function deleteDespesa(id){
   if(!confirm('Excluir essa despesa?')) return;
   await sb.from('despesas').delete().eq('id',id);
   const {data}=await sb.from('despesas').select('*').order('created_at',{ascending:false});
-  despesas=data||[];
-  renderFinanceiro();
-  toast('Despesa excluída.');
+  despesas=data||[]; renderFinanceiro(); toast('Despesa excluída.');
 }
  
-// EDITAR CAIXA
 function editCaixa(id){
   const m=movCaixa.find(x=>x.id===id); if(!m) return;
   editingId.caixa=id;
@@ -650,8 +758,8 @@ function editCaixa(id){
   document.getElementById('cf-desc').value=m.descricao;
   document.getElementById('cf-cat').value=m.cat;
   document.getElementById('cf-val').value=m.val;
-  const parts=m.data.split('/');
-  document.getElementById('cf-data').value=`2026-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+  const p=m.data.split('/');
+  document.getElementById('cf-data').value=`2026-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
   document.getElementById('overlay-caixa').classList.add('show');
 }
  
@@ -664,7 +772,6 @@ async function saveCaixa(){
   if(!descricao||val<=0||!dataRaw){ toast('Preencha todos os campos!'); return; }
   const d=new Date(dataRaw+'T12:00:00');
   const data=(d.getDate()).toString().padStart(2,'0')+'/'+(d.getMonth()+1).toString().padStart(2,'0');
- 
   if(editingId.caixa){
     await sb.from('caixa').update({tipo,descricao,cat,val,data}).eq('id',editingId.caixa);
     toast('✅ Movimentação atualizada!');
@@ -676,20 +783,15 @@ async function saveCaixa(){
   document.getElementById('cf-val').value='';
   closeModal('caixa');
   const {data:c}=await sb.from('caixa').select('*').order('created_at',{ascending:false});
-  movCaixa=c||[];
-  renderCaixa();
+  movCaixa=c||[]; renderCaixa();
 }
  
 async function deleteCaixa(id){
   if(!confirm('Excluir essa movimentação?')) return;
   await sb.from('caixa').delete().eq('id',id);
   const {data}=await sb.from('caixa').select('*').order('created_at',{ascending:false});
-  movCaixa=data||[];
-  renderCaixa();
-  toast('Movimentação excluída.');
+  movCaixa=data||[]; renderCaixa(); toast('Movimentação excluída.');
 }
- 
-loadAll();
 </script>
 </body>
 </html>
