@@ -189,6 +189,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <button class="ntab" onclick="goTab('financeiro',this)">💰 Financeiro</button>
       <button class="ntab" onclick="goTab('caixa',this)">🏦 Caixa</button>
       <button class="ntab" onclick="goTab('pendentes',this)">⏳ Pendentes</button>
+      <button class="ntab" onclick="goTab('agenda',this)">📅 Agenda</button>
     </div>
 
     <div id="pane-hoje" class="pane on">
@@ -341,6 +342,30 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         </div>
       </div>
     </div>
+
+    <!-- AGENDA -->
+    <div id="pane-agenda" class="pane">
+      <div class="metrics" id="age-metrics"></div>
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">📅 Agendamentos</span>
+          <button class="btn" onclick="openModal('agenda')">+ Novo agendamento</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="tbl" style="min-width:580px">
+            <thead><tr>
+              <th style="width:10%">Data</th>
+              <th style="width:22%">Cliente</th>
+              <th style="width:20%">Plano</th>
+              <th style="width:13%">Valor</th>
+              <th style="width:20%">Observação</th>
+              <th style="width:15%;text-align:right">Ações</th>
+            </tr></thead>
+            <tbody id="age-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -410,6 +435,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeModal('caixa')">Cancelar</button>
       <button class="btn-ok" id="caixa-btn" onclick="saveCaixa()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AGENDA -->
+<div class="overlay" id="overlay-agenda">
+  <div class="modal">
+    <div class="modal-title" id="agenda-title">Novo agendamento</div>
+    <div class="field"><label>Nome do cliente</label><input type="text" id="af-nome" placeholder="Ex: João Silva"></div>
+    <div class="row2">
+      <div class="field"><label>Data</label><input type="date" id="af-data"></div>
+      <div class="field"><label>Plano / Serviço</label><input type="text" id="af-plano" placeholder="Ex: Plano mensal, X1..."></div>
+    </div>
+    <div class="field"><label>Valor (R$)</label><input type="number" id="af-valor" placeholder="0,00" min="0" step="0.01"></div>
+    <div class="field"><label>Observação</label><input type="text" id="af-obs" placeholder="Ex: Pagar via PIX, cliente novo..."></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('agenda')">Cancelar</button>
+      <button class="btn-ok" id="agenda-btn" onclick="saveAgenda()">Salvar</button>
     </div>
   </div>
 </div>
@@ -530,6 +573,7 @@ async function loadAll(){
     sb.from('caixa').select('*').order('created_at',{ascending:false}),
   ]);
   dias=d.data||[];despesas=de.data||[];movCaixa=c.data||[];
+  await loadAgenda();
   renderHoje();
 }
 
@@ -753,6 +797,7 @@ function goTab(name,el){
   if(name==='financeiro')renderFinanceiro();
   if(name==='caixa')renderCaixa();
   if(name==='pendentes')renderPendentes();
+  if(name==='agenda')renderAgenda();
 }
 
 function updateStatusLabel(){
@@ -793,11 +838,105 @@ async function aprovarVenda(id){
   await loadAll(); toast('✅ Venda aprovada!');
 }
 
+// ============ AGENDA ============
+let agendamentos = [];
+let editingAgendaId = null;
+
+async function loadAgenda(){
+  const {data} = await sb.from('agendamentos').select('*').order('data',{ascending:true});
+  agendamentos = data||[];
+}
+
+function renderAgenda(){
+  const hoje = new Date().toISOString().split('T')[0];
+  const proximos = agendamentos.filter(a=>a.status!=='cancelado');
+  const totalValor = proximos.reduce((s,a)=>s+Number(a.valor),0);
+
+  document.getElementById('age-metrics').innerHTML=[
+    {cls:'mc',lbl:'Total agendados',val:proximos.length,sub:'ativos'},
+    {cls:'mc-fat',lbl:'Valor total',val:fR(totalValor),sub:'a receber'},
+    {cls:'mc',lbl:'Cancelados',val:agendamentos.filter(a=>a.status==='cancelado').length,sub:'este período'},
+  ].map(m=>`<div class="${m.cls}"><div class="mc-lbl">${m.lbl}</div><div class="mc-val">${m.val}</div><div class="mc-sub">${m.sub}</div></div>`).join('');
+
+  document.getElementById('age-table').innerHTML = agendamentos.length
+    ? agendamentos.map(a=>{
+        const cancelado = a.status==='cancelado';
+        return `<tr style="${cancelado?'opacity:.5':''}">
+          <td>${a.data}</td>
+          <td style="font-weight:500;color:#e6edf3">${a.nome}</td>
+          <td>${a.plano}</td>
+          <td style="color:#3fb950;font-weight:600">${fR(a.valor)}</td>
+          <td style="color:#8b949e">${a.obs||'—'}</td>
+          <td><div class="actions">
+            ${!cancelado?`<button class="btn-icon" onclick="cancelarAgenda('${a.id}')" title="Cancelar" style="color:#f85149;font-size:14px">✖</button>`:'<span style="font-size:11px;color:#f85149">Cancelado</span>'}
+            <button class="btn-icon btn-edit" onclick="editAgenda('${a.id}')" title="Editar">✏️</button>
+            <button class="btn-icon btn-del" onclick="deleteAgenda('${a.id}')" title="Excluir">🗑️</button>
+          </div></td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="6" class="empty">Nenhum agendamento ainda.</td></tr>';
+}
+
+function editAgenda(id){
+  const a = agendamentos.find(x=>x.id===id); if(!a) return;
+  editingAgendaId = id;
+  document.getElementById('agenda-title').textContent='Editar agendamento';
+  document.getElementById('agenda-btn').textContent='Atualizar';
+  document.getElementById('af-nome').value=a.nome;
+  document.getElementById('af-data').value=a.data;
+  document.getElementById('af-plano').value=a.plano;
+  document.getElementById('af-valor').value=a.valor;
+  document.getElementById('af-obs').value=a.obs||'';
+  document.getElementById('overlay-agenda').classList.add('show');
+}
+
+async function saveAgenda(){
+  const nome=document.getElementById('af-nome').value.trim();
+  const data=document.getElementById('af-data').value;
+  const plano=document.getElementById('af-plano').value.trim();
+  const valor=parseFloat(document.getElementById('af-valor').value)||0;
+  const obs=document.getElementById('af-obs').value.trim();
+  if(!nome||!data||!plano){toast('Preencha nome, data e plano!');return;}
+  if(editingAgendaId){
+    await sb.from('agendamentos').update({nome,data,plano,valor,obs}).eq('id',editingAgendaId);
+    toast('✅ Agendamento atualizado!');
+  } else {
+    await sb.from('agendamentos').insert({nome,data,plano,valor,obs,status:'agendado'});
+    toast('✅ Agendamento criado!');
+  }
+  ['af-nome','af-plano','af-valor','af-obs'].forEach(id=>document.getElementById(id).value='');
+  editingAgendaId=null;
+  closeModal('agenda');
+  await loadAgenda();
+  renderAgenda();
+}
+
+async function cancelarAgenda(id){
+  if(!confirm('Cancelar esse agendamento?')) return;
+  await sb.from('agendamentos').update({status:'cancelado'}).eq('id',id);
+  await loadAgenda(); renderAgenda(); toast('Agendamento cancelado.');
+}
+
+async function deleteAgenda(id){
+  if(!confirm('Excluir esse agendamento?')) return;
+  await sb.from('agendamentos').delete().eq('id',id);
+  await loadAgenda(); renderAgenda(); toast('Excluído.');
+}
+
 function openModal(t){
+  if(t==='agenda'){
+    editingAgendaId=null;
+    document.getElementById('agenda-title').textContent='Novo agendamento';
+    document.getElementById('agenda-btn').textContent='Salvar';
+    ['af-nome','af-plano','af-valor','af-obs'].forEach(id=>document.getElementById(id).value='');
+    const d=new Date(); document.getElementById('af-data').value=d.toISOString().split('T')[0];
+    document.getElementById('overlay-agenda').classList.add('show');
+    return;
+  }
   editingId[t]=null;
-  const titles={lancamento:'Lançar dia',despesa:'Nova despesa fixa',caixa:'Lançar movimentação'};
-  document.getElementById(`${t}-title`).textContent=titles[t];
-  document.getElementById(`${t}-btn`).textContent='Salvar';
+  const titles={lancamento:'Lançar dia',despesa:'Nova despesa fixa',caixa:'Lançar movimentação',exportar:'Exportar relatório mensal'};
+  if(document.getElementById(`${t}-title`)) document.getElementById(`${t}-title`).textContent=titles[t]||t;
+  if(document.getElementById(`${t}-btn`)) document.getElementById(`${t}-btn`).textContent='Salvar';
   document.getElementById('overlay-'+t).classList.add('show');
   const d=new Date();
   if(t==='lancamento')document.getElementById('lf-data').value=d.toISOString().split('T')[0];
