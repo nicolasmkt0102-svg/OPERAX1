@@ -192,22 +192,35 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
 
     <div id="pane-hoje" class="pane on">
-      <div class="metrics" id="hoje-metrics"><div class="empty">Carregando...</div></div>
+
+      <!-- FILTRO DE PERÍODO -->
+      <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">
+        <button class="ptab on" onclick="setHojePeriod('hoje',this)">Hoje</button>
+        <button class="ptab" onclick="setHojePeriod('ontem',this)">Ontem</button>
+        <button class="ptab" onclick="setHojePeriod('7',this)">7 dias</button>
+        <button class="ptab" onclick="setHojePeriod('15',this)">15 dias</button>
+        <button class="ptab" onclick="setHojePeriod('30',this)">30 dias</button>
+      </div>
+
+      <!-- CARDS PRINCIPAIS estilo UTMify -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:16px" id="utmify-cards"></div>
+
+      <!-- GRÁFICO + TABELA -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
         <div class="card">
-          <div class="card-head"><span class="card-title">Faturamento — 7 dias</span></div>
+          <div class="card-head"><span class="card-title">Faturamento — período</span></div>
           <div style="padding:12px 16px">
             <div class="bar-wrap" id="fat-bars"></div>
             <div style="display:flex;gap:4px;margin-top:4px" id="fat-labels"></div>
           </div>
         </div>
         <div class="card">
-          <div class="card-head"><span class="card-title">Indicadores do período</span></div>
+          <div class="card-head"><span class="card-title">Resumo do período</span></div>
           <div style="padding:12px 16px;display:flex;flex-direction:column;gap:8px" id="mes-kpis"></div>
         </div>
       </div>
       <div class="card">
-        <div class="card-head"><span class="card-title">Últimos 7 dias</span></div>
+        <div class="card-head"><span class="card-title" id="hoje-table-title">Lançamentos</span></div>
         <div style="overflow-x:auto">
           <table class="tbl" style="min-width:640px">
             <thead><tr>
@@ -607,49 +620,93 @@ function metricsHtml(lista){
   ].map(m=>`<div class="${m.cls}"><div class="mc-lbl">${m.lbl}</div><div class="mc-val">${m.val}</div></div>`).join('');
 }
 
+let hojePeriod = 'hoje';
+
+function setHojePeriod(p, el){
+  hojePeriod = p;
+  document.querySelectorAll('#pane-hoje .ptab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  renderHoje();
+}
+
+function getListaPeriod(){
+  const hoje = new Date();
+  const todayStr = (hoje.getDate()).toString().padStart(2,'0')+'/'+(hoje.getMonth()+1).toString().padStart(2,'0');
+  const ontem = new Date(hoje); ontem.setDate(ontem.getDate()-1);
+  const ontemStr = (ontem.getDate()).toString().padStart(2,'0')+'/'+(ontem.getMonth()+1).toString().padStart(2,'0');
+  if(hojePeriod==='hoje') return dias.filter(d=>d.data===todayStr);
+  if(hojePeriod==='ontem') return dias.filter(d=>d.data===ontemStr);
+  if(hojePeriod==='7') return dias.slice(0,7);
+  if(hojePeriod==='15') return dias.slice(0,15);
+  if(hojePeriod==='30') return dias.slice(0,30);
+  return dias.slice(0,7);
+}
+
 function renderHoje(){
+  const lista = getListaPeriod();
+  const tG=lista.reduce((s,d)=>s+Number(d.gasto),0);
+  const tF=lista.reduce((s,d)=>s+Number(d.fat),0);
+  const tL=lista.reduce((s,d)=>s+Number(d.leads),0);
+  const tV=lista.reduce((s,d)=>s+Number(d.vendas),0);
+  const tDesp=despesas.reduce((s,d)=>s+Number(d.val),0);
+  const lucro = tF - tG - tDesp;
+  const roi = tG>0?((tF-tG)/tG)*100:0;
+  const roas = tG>0?(tF/tG):0;
+  const margem = tF>0?(lucro/tF)*100:0;
+  const cpa = tV>0?tG/tV:0;
+  const cpl = tL>0?tG/tL:0;
+  const conv = tL>0?(tV/tL)*100:0;
+  const pendentes = dias.filter(d=>d.status==='pendente').reduce((s,d)=>s+Number(d.fat),0);
+
   if(!dias.length){
-    document.getElementById('hoje-metrics').innerHTML='<div style="grid-column:1/-1" class="empty">Nenhum dado ainda. Clique em "+ Lançar dia" para começar!</div>';
+    document.getElementById('utmify-cards').innerHTML='<div style="grid-column:1/-1" class="empty">Nenhum dado ainda. Clique em "+ Lançar dia" para começar!</div>';
     ['hoje-table','fat-strip-hoje','fat-bars','fat-labels','mes-kpis'].forEach(id=>document.getElementById(id).innerHTML='');
     return;
   }
-  const hoje=calc(dias[0]);
-  const ontem=dias.length>1?calc(dias[1]):null;
-  const delta=(a,b,inv=false)=>{
-    if(!b||b===0)return '';
-    const d=((a-b)/Math.abs(b))*100;
-    const up=inv?d<0:d>0;
-    return `<span style="font-size:10px;color:${up?'#3fb950':'#f85149'}">${d>0?'↑':'↓'} ${Math.abs(Math.round(d))}% vs ontem</span>`;
-  };
-  document.getElementById('hoje-metrics').innerHTML=[
-    {cls:'mc-gasto',lbl:'Gasto ads',val:fR(hoje.gasto),sub:delta(hoje.gasto,ontem?.gasto,true)},
-    {cls:'mc',lbl:'Leads',val:hoje.leads,sub:delta(hoje.leads,ontem?.leads)},
-    {cls:'mc',lbl:'CPL',val:fR(hoje.cpl),sub:'custo por lead'},
-    {cls:'mc',lbl:'Vendas',val:hoje.vendas,sub:delta(hoje.vendas,ontem?.vendas)},
-    {cls:'mc',lbl:'CPA',val:fR(hoje.cpa),sub:'custo por venda'},
-    {cls:'mc-fat',lbl:'Faturamento',val:fR(hoje.fat),sub:delta(hoje.fat,ontem?.fat)},
-    {cls:'mc-roi',lbl:'ROI',val:Math.round(hoje.roi)+'%',sub:`<span class="badge ${roiBadge(hoje.roi)}">${roiLabel(hoje.roi)}</span>`},
-    {cls:'mc',lbl:'Conversão',val:pct(hoje.conv),sub:'leads → vendas'},
-  ].map(m=>`<div class="${m.cls}"><div class="mc-lbl">${m.lbl}</div><div class="mc-val">${m.val}</div><div class="mc-sub">${m.sub||''}</div></div>`).join('');
 
-  const s7=dias.slice(0,7);
-  const rev=[...s7].reverse();
+  // Cards estilo UTMify
+  const cards = [
+    { lbl:'Faturamento Líquido', val:fR(tF), color:'#56d364', bg:'#0f2419', border:'#3fb950', big:true },
+    { lbl:'Gastos com Anúncios', val:fR(tG), color:'#ff7b72', bg:'#2d1117', border:'#f85149', big:true },
+    { lbl:'Lucro', val:fR(lucro), color: lucro>=0?'#56d364':'#ff7b72', bg: lucro>=0?'#0f2419':'#2d1117', border: lucro>=0?'#3fb950':'#f85149', big:true },
+    { lbl:'ROAS', val:roas.toFixed(2), color:'#79c0ff', bg:'#0c1f3a', border:'#388bfd', big:true },
+    { lbl:'ROI', val:Math.round(roi)+'%', color: roi>=0?'#56d364':'#ff7b72', bg:'#161b22', border:'#30363d' },
+    { lbl:'Margem', val:margem.toFixed(1)+'%', color:'#e6edf3', bg:'#161b22', border:'#30363d' },
+    { lbl:'Vendas', val:tV, color:'#e6edf3', bg:'#161b22', border:'#30363d' },
+    { lbl:'Vendas Pendentes', val:fR(pendentes), color:'#e3b341', bg:'#2b1d0e', border:'#e3b341' },
+    { lbl:'Leads', val:tL, color:'#e6edf3', bg:'#161b22', border:'#30363d' },
+    { lbl:'CPL', val:fR(cpl), color:'#e6edf3', bg:'#161b22', border:'#30363d' },
+    { lbl:'CPA', val:fR(cpa), color:'#e6edf3', bg:'#161b22', border:'#30363d' },
+    { lbl:'Conversão', val:conv.toFixed(1)+'%', color:'#e6edf3', bg:'#161b22', border:'#30363d' },
+  ];
+
+  document.getElementById('utmify-cards').innerHTML = cards.map(c=>`
+    <div style="background:${c.bg};border:0.5px solid ${c.border};border-radius:10px;padding:${c.big?'18px 20px':'14px 16px'}">
+      <div style="font-size:11px;color:#8b949e;margin-bottom:6px;font-weight:500">${c.lbl}</div>
+      <div style="font-size:${c.big?'24px':'20px'};font-weight:700;color:${c.color}">${c.val}</div>
+    </div>`).join('');
+
+  // Gráfico
+  const rev=[...lista].reverse();
   const vals=rev.map(d=>Number(d.fat));
   const mx=Math.max(...vals)||1;
   document.getElementById('fat-bars').innerHTML=vals.map(v=>`<div class="bc"><div style="font-size:9px;color:#3fb950;font-weight:600">${v>=1000?(v/1000).toFixed(1)+'k':v}</div><div class="br" style="height:${Math.max(3,Math.round(v/mx*62))}px;background:#238636"></div></div>`).join('');
   document.getElementById('fat-labels').innerHTML=rev.map(d=>`<div style="flex:1;text-align:center;font-size:9px;color:#8b949e">${d.data}</div>`).join('');
 
-  const tF=s7.reduce((s,d)=>s+Number(d.fat),0),tG=s7.reduce((s,d)=>s+Number(d.gasto),0),tL=s7.reduce((s,d)=>s+Number(d.leads),0),tV=s7.reduce((s,d)=>s+Number(d.vendas),0);
+  // Resumo lateral
   document.getElementById('mes-kpis').innerHTML=[
-    {k:'Faturamento 7 dias',v:fR(tF),grn:true},
-    {k:'Gasto total ads',v:fR(tG),red:true},
-    {k:'ROI do período',v:Math.round(tG>0?((tF-tG)/tG)*100:0)+'%'},
-    {k:'Leads gerados',v:tL},{k:'Vendas realizadas',v:tV},
-    {k:'Conv. média',v:pct(tL>0?(tV/tL)*100:0)},
+    {k:'Faturamento',v:fR(tF),grn:true},
+    {k:'Gastos ads',v:fR(tG),red:true},
+    {k:'Despesas fixas',v:fR(tDesp),red:true},
+    {k:'Lucro líquido',v:fR(lucro),grn:lucro>=0,red:lucro<0},
+    {k:'ROAS',v:roas.toFixed(2)},
+    {k:'ROI',v:Math.round(roi)+'%'},
+    {k:'Margem',v:margem.toFixed(1)+'%'},
+    {k:'Conversão',v:conv.toFixed(1)+'%'},
   ].map(m=>`<div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:#8b949e">${m.k}</span><span style="font-weight:600;color:${m.grn?'#3fb950':m.red?'#f85149':'#e6edf3'}">${m.v}</span></div>`).join('');
 
-  document.getElementById('hoje-table').innerHTML=s7.map(rowHtml).join('');
-  document.getElementById('fat-strip-hoje').innerHTML=fatStrip(s7);
+  document.getElementById('hoje-table').innerHTML=lista.slice(0,30).map(rowHtml).join('');
+  document.getElementById('fat-strip-hoje').innerHTML=fatStrip(lista);
 }
 
 function setPeriod(n,el){curPeriod=n;document.querySelectorAll('.ptab').forEach(t=>t.classList.remove('on'));el.classList.add('on');renderRel();}
