@@ -175,6 +175,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
     <div class="topbar-right">
       <span class="user-badge" id="user-nome">👤</span>
+      <button class="btn-danger" onclick="openModal('senha')" style="border-color:#30363d;color:#8b949e">🔑 Senha</button>
       <button class="btn-danger" onclick="sair()">Sair</button>
       <button class="btn" onclick="openModal('exportar')" style="border-color:#388bfd;color:#79c0ff">📥 Exportar mês</button>
       <button class="btn btn-primary" onclick="openModal('lancamento')">+ Lançar dia</button>
@@ -450,6 +451,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div class="toast" id="toast"></div>
 
+<!-- MODAL TROCAR SENHA -->
+<div class="overlay" id="overlay-senha">
+  <div class="modal">
+    <div class="modal-title">🔑 Trocar senha</div>
+    <div class="auth-error" id="senha-error"></div>
+    <div class="auth-success" id="senha-success"></div>
+    <div class="field"><label>Senha atual</label><input type="password" id="sf-atual" placeholder="••••••••"></div>
+    <div class="field"><label>Nova senha</label><input type="password" id="sf-nova" placeholder="Mínimo 6 caracteres"></div>
+    <div class="field"><label>Confirmar nova senha</label><input type="password" id="sf-confirma" placeholder="Repita a nova senha"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('senha')">Cancelar</button>
+      <button class="btn-ok" onclick="trocarSenha()">Salvar nova senha</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL EXPORTAR -->
 <div class="overlay" id="overlay-exportar">
   <div class="modal">
@@ -553,6 +570,36 @@ function entrarDashboard(){
   loadAll();
 }
 function sair(){localStorage.removeItem('painel_user');usuarioLogado=null;mostrarTela('login');}
+
+async function trocarSenha(){
+  const atual = document.getElementById('sf-atual').value;
+  const nova = document.getElementById('sf-nova').value;
+  const confirma = document.getElementById('sf-confirma').value;
+  const err = document.getElementById('senha-error');
+  const suc = document.getElementById('senha-success');
+  err.classList.remove('show'); suc.classList.remove('show');
+
+  if(!atual||!nova||!confirma){ err.textContent='Preencha todos os campos.'; err.classList.add('show'); return; }
+  if(nova.length<6){ err.textContent='A nova senha precisa ter pelo menos 6 caracteres.'; err.classList.add('show'); return; }
+  if(nova!==confirma){ err.textContent='As senhas não coincidem.'; err.classList.add('show'); return; }
+
+  const hashAtual = hashSenha(atual);
+  const {data,error} = await sb.from('usuarios').select('*').eq('id',usuarioLogado.id).eq('senha',hashAtual).single();
+  if(error||!data){ err.textContent='Senha atual incorreta.'; err.classList.add('show'); return; }
+
+  const hashNova = hashSenha(nova);
+  await sb.from('usuarios').update({senha:hashNova}).eq('id',usuarioLogado.id);
+
+  usuarioLogado.senha = hashNova;
+  localStorage.setItem('painel_user', JSON.stringify(usuarioLogado));
+
+  suc.textContent='✅ Senha alterada com sucesso!';
+  suc.classList.add('show');
+  document.getElementById('sf-atual').value='';
+  document.getElementById('sf-nova').value='';
+  document.getElementById('sf-confirma').value='';
+  setTimeout(()=>closeModal('senha'), 2000);
+}
 const saved=localStorage.getItem('painel_user');
 if(saved){try{usuarioLogado=JSON.parse(saved);entrarDashboard();}catch(e){mostrarTela('login');}}
 else{mostrarTela('login');}
