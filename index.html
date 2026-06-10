@@ -219,6 +219,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <button class="ntab" onclick="goTab('financeiro',this)">💰 Financeiro</button>
       <button class="ntab" onclick="goTab('caixa',this)">🏦 Caixa</button>
       <button class="ntab" onclick="goTab('agenda',this)">📅 Agenda</button>
+      <button class="ntab" onclick="goTab('capi',this)">⚡ CAPI</button>
     </div>
 
     <div id="pane-hoje" class="pane on">
@@ -383,6 +384,66 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
               <th style="width:15%;text-align:right">Ações</th>
             </tr></thead>
             <tbody id="age-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    <!-- CAPI -->
+    <div id="pane-capi" class="pane">
+      <div class="metrics" id="capi-metrics"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div class="card">
+          <div class="card-head"><span class="card-title">Eventos por hora — hoje</span></div>
+          <div style="padding:12px 16px">
+            <div class="bar-wrap" id="capi-bars"></div>
+            <div style="display:flex;gap:4px;margin-top:4px" id="capi-bar-labels"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><span class="card-title">Status da integração</span></div>
+          <div style="padding:12px 16px;display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px">
+              <span style="color:#8b949e">Meta Pixel</span>
+              <div style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:#3fb950;display:inline-block"></span><span style="color:#3fb950;font-weight:600">ATIVO</span></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px">
+              <span style="color:#8b949e">Pixel ID</span>
+              <span style="color:#e6edf3;font-family:monospace;font-size:11px">4215163122128959</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px">
+              <span style="color:#8b949e">Payt</span>
+              <div style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:#3fb950;display:inline-block"></span><span style="color:#3fb950;font-weight:600">ATIVO</span></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px">
+              <span style="color:#8b949e">CAPI/mês</span>
+              <span style="color:#e6edf3;font-weight:600" id="capi-count-mes">0</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px">
+              <span style="color:#8b949e">Taxa de sucesso</span>
+              <span style="color:#3fb950;font-weight:600" id="capi-taxa">100%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">// Log de eventos</span>
+          <span style="font-size:12px;color:#8b949e" id="capi-total-log">0 registros</span>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="tbl" style="min-width:580px">
+            <thead><tr>
+              <th style="width:12%">Plataforma</th>
+              <th style="width:18%">Pedido</th>
+              <th style="width:28%">Produto</th>
+              <th style="width:15%">Valor</th>
+              <th style="width:12%">CAPI</th>
+              <th style="width:15%">Data</th>
+            </tr></thead>
+            <tbody id="capi-log"></tbody>
           </table>
         </div>
       </div>
@@ -934,6 +995,7 @@ function goTab(name,el){
   if(name==='caixa')renderCaixa();
   if(name==='pendentes')renderPendentes();
   if(name==='agenda')renderAgenda();
+  if(name==='capi')renderCapi();
 }
 
 function updateStatusLabel(){
@@ -1057,6 +1119,52 @@ async function deleteAgenda(id){
   if(!confirm('Excluir esse agendamento?')) return;
   await sb.from('agendamentos').delete().eq('id',id);
   await loadAgenda(); renderAgenda(); toast('Excluído.');
+}
+
+async function renderCapi(){
+  const {data} = await sb.from('capi_eventos').select('*').order('created_at',{ascending:false}).limit(50);
+  const eventos = data||[];
+  const total = eventos.length;
+  const sent = eventos.filter(e=>e.status==='SENT').length;
+  const errors = eventos.filter(e=>e.status==='ERROR').length;
+  const taxa = total>0?Math.round((sent/total)*100):100;
+  const receitaTotal = eventos.filter(e=>e.status==='SENT').reduce((s,e)=>s+Number(e.valor),0);
+  const hoje = new Date();
+  const hojeStr = (hoje.getDate()).toString().padStart(2,'0')+'/'+(hoje.getMonth()+1).toString().padStart(2,'0');
+  const eventosHoje = eventos.filter(e=>e.data&&e.data.startsWith(hojeStr));
+
+  document.getElementById('capi-metrics').innerHTML=[
+    {cls:'mc-fat',lbl:'Receita rastreada',val:fR(receitaTotal),sub:'eventos SENT'},
+    {cls:'mc-roi',lbl:'Eventos enviados',val:sent,sub:`${eventosHoje.length} hoje · ${sent} recebidos`},
+    {cls:'mc',lbl:'Taxa de sucesso',val:taxa+'%',sub:'confirmados CAPI'},
+    {cls:errors>0?'mc-gasto':'mc',lbl:'Com erro',val:errors,sub:errors===0?'tudo ok ✓':'verificar'},
+  ].map(m=>`<div class="${m.cls}"><div class="mc-lbl">${m.lbl}</div><div class="mc-val">${m.val}</div><div class="mc-sub">${m.sub}</div></div>`).join('');
+
+  const horas=Array.from({length:24},(_,i)=>i);
+  const porHora=horas.map(h=>eventosHoje.filter(e=>{
+    if(!e.data)return false;
+    const p=e.data.split(' ');
+    return p.length>=2&&parseInt(p[1].split(':')[0])===h;
+  }).length);
+  const mx=Math.max(...porHora)||1;
+  document.getElementById('capi-bars').innerHTML=porHora.map(v=>`<div class="bc"><div style="font-size:9px;color:#3fb950;font-weight:600">${v>0?v:''}</div><div class="br" style="height:${Math.max(2,Math.round(v/mx*62))}px;background:${v>0?'#238636':'#21262d'}"></div></div>`).join('');
+  document.getElementById('capi-bar-labels').innerHTML=horas.filter((_,i)=>i%4===0).map(h=>`<div style="flex:1;text-align:center;font-size:9px;color:#8b949e">${h.toString().padStart(2,'0')}h</div>`).join('');
+
+  document.getElementById('capi-count-mes').textContent=total;
+  document.getElementById('capi-taxa').textContent=taxa+'%';
+  document.getElementById('capi-taxa').style.color=taxa===100?'#3fb950':'#e3b341';
+  document.getElementById('capi-total-log').textContent=total+' registros';
+
+  document.getElementById('capi-log').innerHTML=eventos.length
+    ?eventos.map(e=>`<tr>
+      <td><span style="background:#1a3a1a;color:#3fb950;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">${e.plataforma||'Payt'}</span></td>
+      <td style="font-family:monospace;font-size:11px;color:#8b949e">${e.pedido||'—'}</td>
+      <td style="color:#e6edf3">${e.produto||'—'}</td>
+      <td style="color:#3fb950;font-weight:600">${fR(e.valor||0)}</td>
+      <td><span style="background:${e.status==='SENT'?'#0f2419':'#2d1117'};color:${e.status==='SENT'?'#3fb950':'#f85149'};padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">● ${e.status}</span></td>
+      <td style="color:#8b949e;font-size:11px">${e.data||'—'}</td>
+    </tr>`).join('')
+    :'<tr><td colspan="6" class="empty">Nenhum evento registrado ainda.</td></tr>';
 }
 
 function openModal(t){
