@@ -142,9 +142,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="auth-title">Painel de Operação</div>
     <div class="auth-sub">Entre com sua conta para acessar</div>
     <div class="auth-error" id="login-error"></div>
+    <div class="auth-success" id="login-success"></div>
     <div class="auth-field"><label>E-mail</label><input type="email" id="login-email" placeholder="seu@email.com"></div>
     <div class="auth-field"><label>Senha</label><input type="password" id="login-senha" placeholder="••••••••" onkeydown="if(event.key==='Enter')fazerLogin()"></div>
     <button class="auth-btn" onclick="fazerLogin()">Entrar</button>
+    <div class="auth-switch" style="margin-top:12px"><a onclick="mostrarTela('esqueci')" style="color:#8b949e;font-size:12px">Esqueceu sua senha?</a></div>
     <div class="auth-switch">Não tem conta? <a onclick="mostrarTela('cadastro')">Cadastre-se</a></div>
   </div>
 </div>
@@ -157,12 +159,39 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="auth-sub">Preencha os dados para se cadastrar</div>
     <div class="auth-error" id="cadastro-error"></div>
     <div class="auth-success" id="cadastro-success"></div>
-    <div class="auth-field"><label>Seu nome</label><input type="text" id="cadastro-nome" placeholder="Seu nome"></div>
     <div class="auth-field"><label>E-mail</label><input type="email" id="cadastro-email" placeholder="seu@email.com"></div>
     <div class="auth-field"><label>Senha</label><input type="password" id="cadastro-senha" placeholder="Mínimo 6 caracteres"></div>
     <div class="auth-field"><label>Confirmar senha</label><input type="password" id="cadastro-confirma" placeholder="Repita a senha" onkeydown="if(event.key==='Enter')fazerCadastro()"></div>
     <button class="auth-btn" onclick="fazerCadastro()">Criar conta</button>
     <div class="auth-switch">Já tem conta? <a onclick="mostrarTela('login')">Entrar</a></div>
+  </div>
+</div>
+
+<!-- ESQUECEU SENHA -->
+<div id="screen-esqueci" class="auth-bg" style="display:none">
+  <div class="auth-card">
+    <div class="auth-logo">🔑</div>
+    <div class="auth-title">Recuperar senha</div>
+    <div class="auth-sub">Enviaremos um link para redefinir sua senha</div>
+    <div class="auth-error" id="esqueci-error"></div>
+    <div class="auth-success" id="esqueci-success"></div>
+    <div class="auth-field"><label>E-mail</label><input type="email" id="esqueci-email" placeholder="seu@email.com" onkeydown="if(event.key==='Enter')enviarRecuperacao()"></div>
+    <button class="auth-btn" onclick="enviarRecuperacao()">Enviar link de recuperação</button>
+    <div class="auth-switch">Lembrou a senha? <a onclick="mostrarTela('login')">Voltar ao login</a></div>
+  </div>
+</div>
+
+<!-- REDEFINIR SENHA (após clicar no link do e-mail) -->
+<div id="screen-redefinir" class="auth-bg" style="display:none">
+  <div class="auth-card">
+    <div class="auth-logo">🔑</div>
+    <div class="auth-title">Nova senha</div>
+    <div class="auth-sub">Digite sua nova senha</div>
+    <div class="auth-error" id="redefinir-error"></div>
+    <div class="auth-success" id="redefinir-success"></div>
+    <div class="auth-field"><label>Nova senha</label><input type="password" id="redefinir-nova" placeholder="Mínimo 6 caracteres"></div>
+    <div class="auth-field"><label>Confirmar senha</label><input type="password" id="redefinir-confirma" placeholder="Repita a nova senha" onkeydown="if(event.key==='Enter')redefinirSenha()"></div>
+    <button class="auth-btn" onclick="redefinirSenha()">Salvar nova senha</button>
   </div>
 </div>
 
@@ -457,7 +486,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="modal-title">🔑 Trocar senha</div>
     <div class="auth-error" id="senha-error"></div>
     <div class="auth-success" id="senha-success"></div>
-    <div class="field"><label>Senha atual</label><input type="password" id="sf-atual" placeholder="••••••••"></div>
     <div class="field"><label>Nova senha</label><input type="password" id="sf-nova" placeholder="Mínimo 6 caracteres"></div>
     <div class="field"><label>Confirmar nova senha</label><input type="password" id="sf-confirma" placeholder="Repita a nova senha"></div>
     <div class="modal-btns">
@@ -519,11 +547,13 @@ let editingId={lancamento:null,despesa:null,caixa:null};
 let usuarioLogado=null;
 
 function mostrarTela(t){
-  document.getElementById('screen-login').style.display=t==='login'?'flex':'none';
-  document.getElementById('screen-cadastro').style.display=t==='cadastro'?'flex':'none';
-  document.getElementById('screen-dashboard').style.display=t==='dashboard'?'block':'none';
+  ['login','cadastro','esqueci','redefinir','dashboard'].forEach(s=>{
+    const el=document.getElementById('screen-'+s);
+    if(el) el.style.display='none';
+  });
+  const target=document.getElementById('screen-'+t);
+  if(target) target.style.display=(t==='dashboard'?'block':'flex');
 }
-function hashSenha(s){let h=0;for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return Math.abs(h).toString(16);}
 
 async function fazerLogin(){
   const email=document.getElementById('login-email').value.trim();
@@ -531,78 +561,100 @@ async function fazerLogin(){
   const err=document.getElementById('login-error');
   err.classList.remove('show');
   if(!email||!senha){err.textContent='Preencha e-mail e senha.';err.classList.add('show');return;}
-  const hash=hashSenha(senha);
-  const {data,error}=await sb.from('usuarios').select('*').eq('email',email).eq('senha',hash).single();
-  if(error||!data){err.textContent='E-mail ou senha incorretos.';err.classList.add('show');return;}
-  usuarioLogado=data;
-  localStorage.setItem('painel_user',JSON.stringify(data));
+  const {data,error}=await sb.auth.signInWithPassword({email,password:senha});
+  if(error){err.textContent='E-mail ou senha incorretos.';err.classList.add('show');return;}
+  usuarioLogado=data.user;
   entrarDashboard();
 }
 
 async function fazerCadastro(){
-  const nome=document.getElementById('cadastro-nome').value.trim();
   const email=document.getElementById('cadastro-email').value.trim();
   const senha=document.getElementById('cadastro-senha').value;
   const confirma=document.getElementById('cadastro-confirma').value;
   const err=document.getElementById('cadastro-error');
   const suc=document.getElementById('cadastro-success');
   err.classList.remove('show');suc.classList.remove('show');
-  if(!nome||!email||!senha){err.textContent='Preencha todos os campos.';err.classList.add('show');return;}
+  if(!email||!senha){err.textContent='Preencha todos os campos.';err.classList.add('show');return;}
   if(senha.length<6){err.textContent='A senha precisa ter pelo menos 6 caracteres.';err.classList.add('show');return;}
   if(senha!==confirma){err.textContent='As senhas não coincidem.';err.classList.add('show');return;}
-  const hash=hashSenha(senha);
-  const {error}=await sb.from('usuarios').insert({nome,email,senha:hash});
-  if(error){
-    if(error.code==='23505'){err.textContent='Este e-mail já está cadastrado.';}
-    else{err.textContent='Erro ao cadastrar. Tente novamente.';}
-    err.classList.add('show');return;
-  }
-  suc.textContent='Conta criada com sucesso! Faça o login.';
+  const {error}=await sb.auth.signUp({email,password:senha});
+  if(error){err.textContent='Erro: '+error.message;err.classList.add('show');return;}
+  suc.textContent='✅ Conta criada! Verifique seu e-mail para confirmar o cadastro.';
   suc.classList.add('show');
-  setTimeout(()=>mostrarTela('login'),2000);
+  setTimeout(()=>mostrarTela('login'),3000);
+}
+
+async function enviarRecuperacao(){
+  const email=document.getElementById('esqueci-email').value.trim();
+  const err=document.getElementById('esqueci-error');
+  const suc=document.getElementById('esqueci-success');
+  err.classList.remove('show');suc.classList.remove('show');
+  if(!email){err.textContent='Digite seu e-mail.';err.classList.add('show');return;}
+  const {error}=await sb.auth.resetPasswordForEmail(email,{
+    redirectTo:'https://dashboard-opera-o.vercel.app'
+  });
+  if(error){err.textContent='Erro: '+error.message;err.classList.add('show');return;}
+  suc.textContent='✅ Link enviado! Verifique seu e-mail e clique no link para redefinir sua senha.';
+  suc.classList.add('show');
+}
+
+async function redefinirSenha(){
+  const nova=document.getElementById('redefinir-nova').value;
+  const confirma=document.getElementById('redefinir-confirma').value;
+  const err=document.getElementById('redefinir-error');
+  const suc=document.getElementById('redefinir-success');
+  err.classList.remove('show');suc.classList.remove('show');
+  if(!nova||!confirma){err.textContent='Preencha os campos.';err.classList.add('show');return;}
+  if(nova.length<6){err.textContent='Mínimo 6 caracteres.';err.classList.add('show');return;}
+  if(nova!==confirma){err.textContent='As senhas não coincidem.';err.classList.add('show');return;}
+  const {error}=await sb.auth.updateUser({password:nova});
+  if(error){err.textContent='Erro: '+error.message;err.classList.add('show');return;}
+  suc.textContent='✅ Senha alterada com sucesso!';
+  suc.classList.add('show');
+  setTimeout(()=>entrarDashboard(),2000);
+}
+
+async function trocarSenha(){
+  const nova=document.getElementById('sf-nova').value;
+  const confirma=document.getElementById('sf-confirma').value;
+  const err=document.getElementById('senha-error');
+  const suc=document.getElementById('senha-success');
+  err.classList.remove('show');suc.classList.remove('show');
+  if(!nova||!confirma){err.textContent='Preencha os campos.';err.classList.add('show');return;}
+  if(nova.length<6){err.textContent='Mínimo 6 caracteres.';err.classList.add('show');return;}
+  if(nova!==confirma){err.textContent='As senhas não coincidem.';err.classList.add('show');return;}
+  const {error}=await sb.auth.updateUser({password:nova});
+  if(error){err.textContent='Erro: '+error.message;err.classList.add('show');return;}
+  suc.textContent='✅ Senha alterada com sucesso!';
+  suc.classList.add('show');
+  document.getElementById('sf-nova').value='';
+  document.getElementById('sf-confirma').value='';
+  setTimeout(()=>closeModal('senha'),2000);
 }
 
 function entrarDashboard(){
   mostrarTela('dashboard');
-  document.getElementById('user-nome').textContent='👤 '+usuarioLogado.nome;
+  const email=usuarioLogado?.email||'';
+  document.getElementById('user-nome').textContent='👤 '+email.split('@')[0];
   const d=new Date();
   document.getElementById('topbar-sub').textContent=d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
   loadAll();
 }
-function sair(){localStorage.removeItem('painel_user');usuarioLogado=null;mostrarTela('login');}
 
-async function trocarSenha(){
-  const atual = document.getElementById('sf-atual').value;
-  const nova = document.getElementById('sf-nova').value;
-  const confirma = document.getElementById('sf-confirma').value;
-  const err = document.getElementById('senha-error');
-  const suc = document.getElementById('senha-success');
-  err.classList.remove('show'); suc.classList.remove('show');
+function sair(){sb.auth.signOut();usuarioLogado=null;mostrarTela('login');}
 
-  if(!atual||!nova||!confirma){ err.textContent='Preencha todos os campos.'; err.classList.add('show'); return; }
-  if(nova.length<6){ err.textContent='A nova senha precisa ter pelo menos 6 caracteres.'; err.classList.add('show'); return; }
-  if(nova!==confirma){ err.textContent='As senhas não coincidem.'; err.classList.add('show'); return; }
+sb.auth.onAuthStateChange((event,session)=>{
+  if(event==='PASSWORD_RECOVERY'){mostrarTela('redefinir');}
+  else if(event==='SIGNED_IN'&&session){
+    usuarioLogado=session.user;
+    if(document.getElementById('screen-dashboard').style.display==='none') entrarDashboard();
+  } else if(event==='SIGNED_OUT'){mostrarTela('login');}
+});
 
-  const hashAtual = hashSenha(atual);
-  const {data,error} = await sb.from('usuarios').select('*').eq('id',usuarioLogado.id).eq('senha',hashAtual).single();
-  if(error||!data){ err.textContent='Senha atual incorreta.'; err.classList.add('show'); return; }
-
-  const hashNova = hashSenha(nova);
-  await sb.from('usuarios').update({senha:hashNova}).eq('id',usuarioLogado.id);
-
-  usuarioLogado.senha = hashNova;
-  localStorage.setItem('painel_user', JSON.stringify(usuarioLogado));
-
-  suc.textContent='✅ Senha alterada com sucesso!';
-  suc.classList.add('show');
-  document.getElementById('sf-atual').value='';
-  document.getElementById('sf-nova').value='';
-  document.getElementById('sf-confirma').value='';
-  setTimeout(()=>closeModal('senha'), 2000);
-}
-const saved=localStorage.getItem('painel_user');
-if(saved){try{usuarioLogado=JSON.parse(saved);entrarDashboard();}catch(e){mostrarTela('login');}}
-else{mostrarTela('login');}
+sb.auth.getSession().then(({data:{session}})=>{
+  if(session){usuarioLogado=session.user;entrarDashboard();}
+  else{mostrarTela('login');}
+});
 
 async function loadAll(){
   const [d,de,c]=await Promise.all([
