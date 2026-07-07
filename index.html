@@ -302,6 +302,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="sidebar-item" onclick="goTab('ferramentas',this)" id="nav-ferramentas">
         <span class="sidebar-icon">🛠️</span><span class="sidebar-label">Ferramentas</span>
       </div>
+      <div class="sidebar-item" onclick="goTab('config',this)" id="nav-config">
+        <span class="sidebar-icon">⚙️</span><span class="sidebar-label">Configurações</span>
+      </div>
       <div class="sidebar-divider"></div>
       <div class="sidebar-item" onclick="openModal('exportar')" id="nav-exportar">
         <span class="sidebar-icon">📥</span><span class="sidebar-label">Exportar mês</span>
@@ -515,7 +518,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
               </div>
               <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px">
                 <span style="color:#8b949e">Pixel ID</span>
-                <span style="color:#e6edf3;font-family:monospace;font-size:11px">1674640003839037</span>
+                <span style="color:#e6edf3;font-family:monospace;font-size:11px" id="capi-pixel-id-display">—</span>
               </div>
               <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px">
                 <span style="color:#8b949e">Payt</span>
@@ -650,6 +653,38 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
           <div class="notes-area">
             <textarea id="notas-texto" placeholder="Anote aqui qualquer coisa importante — ideias, lembretes, observações..."></textarea>
             <button class="notes-save-btn" onclick="salvarNotas()">💾 Salvar anotação</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONFIGURAÇÕES -->
+      <div id="pane-config" class="pane">
+        <div style="margin-bottom:16px">
+          <div style="font-size:16px;font-weight:700;color:#e6edf3">⚙️ Configurações de Trackeamento</div>
+          <div style="font-size:12px;color:#8b949e;margin-top:2px">Altere o Pixel ID e o Token de acesso do Meta Ads sem precisar mexer em código</div>
+        </div>
+        <div class="card">
+          <div class="card-head"><span class="card-title">Meta Pixel — CAPI</span></div>
+          <div style="padding:16px">
+            <div class="field">
+              <label>Pixel ID</label>
+              <input type="text" id="cfg-pixel-id" placeholder="Ex: 1058802209923418">
+            </div>
+            <div class="field">
+              <label>Access Token</label>
+              <textarea id="cfg-access-token" rows="4" style="font-family:monospace;font-size:11px" placeholder="Cole aqui o token de acesso do Meta..."></textarea>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+              <button class="btn btn-primary" onclick="salvarConfig()">💾 Salvar configurações</button>
+              <span id="cfg-status" style="font-size:12px;color:#8b949e"></span>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><span class="card-title">ℹ️ Webhook (referência)</span></div>
+          <div style="padding:16px">
+            <div style="font-size:12px;color:#8b949e;margin-bottom:8px">Esta é a URL cadastrada na Payt para receber vendas. Não é editável por aqui — precisa ser alterada diretamente no n8n e na Payt.</div>
+            <div style="background:#0d1117;border:0.5px solid #30363d;border-radius:8px;padding:10px 12px;font-family:monospace;font-size:11px;color:#79c0ff;word-break:break-all">https://n8n-production-9a28.up.railway.app/webhook/payt-webhook</div>
           </div>
         </div>
       </div>
@@ -1273,7 +1308,42 @@ function renderChips(){
     :'<tr><td colspan="5" class="empty">Nenhum chip cadastrado.</td></tr>';
 }
 
+// ============ CONFIGURAÇÕES ============
+async function renderConfig(){
+  const {data,error}=await sb.from('configuracoes').select('*').eq('id',1).single();
+  if(error||!data){
+    document.getElementById('cfg-status').textContent='⚠️ Não foi possível carregar as configurações.';
+    document.getElementById('cfg-status').style.color='#f85149';
+    return;
+  }
+  document.getElementById('cfg-pixel-id').value=data.pixel_id||'';
+  document.getElementById('cfg-access-token').value=data.access_token||'';
+  document.getElementById('cfg-status').textContent='';
+}
+
+async function salvarConfig(){
+  const pixel_id=document.getElementById('cfg-pixel-id').value.trim();
+  const access_token=document.getElementById('cfg-access-token').value.trim();
+  const statusEl=document.getElementById('cfg-status');
+  if(!pixel_id||!access_token){
+    statusEl.textContent='Preencha Pixel ID e Access Token!';
+    statusEl.style.color='#f85149';
+    return;
+  }
+  const {error}=await sb.from('configuracoes').update({pixel_id,access_token,updated_at:new Date().toISOString()}).eq('id',1);
+  if(error){
+    statusEl.textContent='❌ Erro ao salvar: '+error.message;
+    statusEl.style.color='#f85149';
+    return;
+  }
+  statusEl.textContent='✅ Salvo! O n8n já vai usar os novos dados na próxima venda.';
+  statusEl.style.color='#3fb950';
+  toast('✅ Configurações salvas!');
+}
+
 async function renderCapi(){
+  const {data:cfg}=await sb.from('configuracoes').select('pixel_id').eq('id',1).single();
+  document.getElementById('capi-pixel-id-display').textContent=cfg?.pixel_id||'—';
   const {data}=await sb.from('capi_eventos').select('*').order('created_at',{ascending:false}).limit(50);
   const eventos=data||[];
   const total=eventos.length;
@@ -1346,6 +1416,7 @@ function goTab(name,el){
   if(name==='chips')renderChips();
   if(name==='capi')renderCapi();
   if(name==='ferramentas')carregarNotas();
+  if(name==='config')renderConfig();
 }
 
 // ============ MODAL ============
