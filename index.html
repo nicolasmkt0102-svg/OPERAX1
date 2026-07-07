@@ -226,7 +226,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="auth-error" id="redefinir-error"></div>
     <div class="auth-success" id="redefinir-success"></div>
     <div class="auth-field"><label>Nova senha</label><input type="password" id="redefinir-nova" placeholder="Mínimo 6 caracteres"></div>
-    <div class="auth-field"><label>Confirmar senha</label><input type="password" id="redefinir-confirma" placeholder="Repita a nova senha" onkeydown="if(event.key==='Enter')redefinirSenha()"></div>
+    <div class="auth-field"><label>Confirmar senha</label><input type="password" id="redefinir-confirma" placeholder="Repita a nova senha"></div>
     <button class="auth-btn" onclick="redefinirSenha()">Salvar nova senha</button>
   </div>
 </div>
@@ -291,6 +291,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       </div>
       <div class="sidebar-item" onclick="goTab('agenda',this)" id="nav-agenda">
         <span class="sidebar-icon">📅</span><span class="sidebar-label">Agenda</span>
+      </div>
+      <div class="sidebar-item" onclick="goTab('chips',this)" id="nav-chips">
+        <span class="sidebar-icon">📱</span><span class="sidebar-label">Chips</span>
       </div>
       <div class="sidebar-divider"></div>
       <div class="sidebar-item" onclick="goTab('capi',this)" id="nav-capi">
@@ -466,6 +469,27 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
                 <th style="width:20%">Obs</th><th style="width:15%;text-align:right">Ações</th>
               </tr></thead>
               <tbody id="age-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHIPS -->
+      <div id="pane-chips" class="pane">
+        <div class="metrics" id="chips-metrics"></div>
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">📱 Chips cadastrados</span>
+            <button class="btn" onclick="openModal('chip')">+ Novo chip</button>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="tbl" style="min-width:640px">
+              <thead><tr>
+                <th style="width:15%">Número</th><th style="width:15%">Operadora</th>
+                <th style="width:12%">Status</th><th style="width:38%">Observações</th>
+                <th style="width:20%;text-align:right">Ações</th>
+              </tr></thead>
+              <tbody id="chips-table"></tbody>
             </table>
           </div>
         </div>
@@ -721,6 +745,33 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
+<div class="overlay" id="overlay-chip">
+  <div class="modal">
+    <div class="modal-title" id="chip-title">Novo chip</div>
+    <div class="field"><label>Número (celular)</label><input type="text" id="cp-numero" placeholder="Ex: (11) 99999-9999"></div>
+    <div class="row2">
+      <div class="field"><label>Operadora</label>
+        <select id="cp-operadora">
+          <option>Vivo</option><option>Claro</option><option>TIM</option>
+          <option>Oi</option><option>Algar</option><option>Outra</option>
+        </select>
+      </div>
+      <div class="field"><label>Status</label>
+        <select id="cp-status">
+          <option value="ativo">✅ Ativo</option>
+          <option value="inativo">⏳ Inativo</option>
+          <option value="bloqueado">🚫 Bloqueado</option>
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>Observações</label><textarea id="cp-obs" rows="3" placeholder="Anotações sobre esse chip..."></textarea></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('chip')">Cancelar</button>
+      <button class="btn-ok" id="chip-btn" onclick="saveChip()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="overlay-senha">
   <div class="modal">
     <div class="modal-title">🔑 Trocar senha</div>
@@ -763,9 +814,10 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const fR=v=>'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const pct=v=>Number(v).toFixed(1)+'%';
 
-let dias=[],despesas=[],movCaixa=[],agendamentos=[];
+let dias=[],despesas=[],movCaixa=[],agendamentos=[],chips=[];
 let editingId={lancamento:null,despesa:null,caixa:null};
 let editingAgendaId=null;
+let editingChipId=null;
 let usuarioLogado=null;
 let mesSelecionado=new Date().getMonth()+1;
 let anoSelecionado=new Date().getFullYear();
@@ -894,13 +946,14 @@ function getMesStr(){
 
 // ============ DADOS ============
 async function loadAll(){
-  const [d,de,c,ag]=await Promise.all([
+  const [d,de,c,ag,ch]=await Promise.all([
     sb.from('dias').select('*').order('created_at',{ascending:false}),
     sb.from('despesas').select('*').order('created_at',{ascending:false}),
     sb.from('caixa').select('*').order('created_at',{ascending:false}),
     sb.from('agendamentos').select('*').order('data',{ascending:true}),
+    sb.from('chips').select('*').order('created_at',{ascending:false}),
   ]);
-  dias=d.data||[];despesas=de.data||[];movCaixa=c.data||[];agendamentos=ag.data||[];
+  dias=d.data||[];despesas=de.data||[];movCaixa=c.data||[];agendamentos=ag.data||[];chips=ch.data||[];
   // Filtrar dias pelo mês/ano selecionado
   const mesStr=getMesStr();
   dias=dias.filter(d=>{
@@ -1192,6 +1245,34 @@ function renderAgenda(){
     :'<tr><td colspan="6" class="empty">Nenhum agendamento.</td></tr>';
 }
 
+function renderChips(){
+  const ativos=chips.filter(c=>c.status==='ativo').length;
+  const inativos=chips.filter(c=>c.status==='inativo').length;
+  const bloqueados=chips.filter(c=>c.status==='bloqueado').length;
+  document.getElementById('chips-metrics').innerHTML=[
+    {cls:'mc',lbl:'Total de chips',val:chips.length},
+    {cls:'mc-fat',lbl:'Ativos',val:ativos},
+    {cls:'mc',lbl:'Inativos',val:inativos},
+    {cls:'mc-gasto',lbl:'Bloqueados',val:bloqueados},
+  ].map(m=>`<div class="${m.cls}"><div class="mc-lbl">${m.lbl}</div><div class="mc-val">${m.val}</div></div>`).join('');
+
+  const statusBadge=s=>s==='ativo'?'b-ok':s==='inativo'?'b-warn':'b-bad';
+  const statusLabel=s=>s==='ativo'?'✅ Ativo':s==='inativo'?'⏳ Inativo':'🚫 Bloqueado';
+
+  document.getElementById('chips-table').innerHTML=chips.length
+    ?chips.map(c=>`<tr>
+        <td style="font-weight:500">${c.numero}</td>
+        <td>${c.operadora||'—'}</td>
+        <td><span class="badge ${statusBadge(c.status)}">${statusLabel(c.status)}</span></td>
+        <td style="color:#8b949e;white-space:normal">${c.observacoes||'—'}</td>
+        <td><div class="actions">
+          <button class="btn-icon btn-edit" onclick="editChip('${c.id}')" title="Editar">✏️</button>
+          <button class="btn-icon btn-del" onclick="deleteChip('${c.id}')" title="Excluir">🗑️</button>
+        </div></td>
+      </tr>`).join('')
+    :'<tr><td colspan="5" class="empty">Nenhum chip cadastrado.</td></tr>';
+}
+
 async function renderCapi(){
   const {data}=await sb.from('capi_eventos').select('*').order('created_at',{ascending:false}).limit(50);
   const eventos=data||[];
@@ -1262,6 +1343,7 @@ function goTab(name,el){
   if(name==='financeiro')renderFinanceiro();
   if(name==='caixa')renderCaixa();
   if(name==='agenda')renderAgenda();
+  if(name==='chips')renderChips();
   if(name==='capi')renderCapi();
   if(name==='ferramentas')carregarNotas();
 }
@@ -1275,6 +1357,16 @@ function openModal(t){
     ['af-nome','af-plano','af-valor','af-obs'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('af-data').value=new Date().toISOString().split('T')[0];
     document.getElementById('overlay-agenda').classList.add('show');return;
+  }
+  if(t==='chip'){
+    editingChipId=null;
+    document.getElementById('chip-title').textContent='Novo chip';
+    document.getElementById('chip-btn').textContent='Salvar';
+    document.getElementById('cp-numero').value='';
+    document.getElementById('cp-operadora').value='Vivo';
+    document.getElementById('cp-status').value='ativo';
+    document.getElementById('cp-obs').value='';
+    document.getElementById('overlay-chip').classList.add('show');return;
   }
   if(t==='lancamento'){
     editingId.lancamento=null;
@@ -1475,6 +1567,44 @@ async function deleteAgenda(id){
   await sb.from('agendamentos').delete().eq('id',id);
   const {data}=await sb.from('agendamentos').select('*').order('data',{ascending:true});
   agendamentos=data||[];renderAgenda();toast('Excluído.');
+}
+
+// ============ CHIPS ============
+function editChip(id){
+  const c=chips.find(x=>x.id===id);if(!c)return;
+  editingChipId=id;
+  document.getElementById('chip-title').textContent='Editar chip';
+  document.getElementById('chip-btn').textContent='Atualizar';
+  document.getElementById('cp-numero').value=c.numero;
+  document.getElementById('cp-operadora').value=c.operadora||'Vivo';
+  document.getElementById('cp-status').value=c.status||'ativo';
+  document.getElementById('cp-obs').value=c.observacoes||'';
+  document.getElementById('overlay-chip').classList.add('show');
+}
+
+async function saveChip(){
+  const numero=document.getElementById('cp-numero').value.trim();
+  const operadora=document.getElementById('cp-operadora').value;
+  const status=document.getElementById('cp-status').value;
+  const observacoes=document.getElementById('cp-obs').value.trim();
+  if(!numero){toast('Preencha o número!');return;}
+  if(editingChipId){
+    await sb.from('chips').update({numero,operadora,status,observacoes}).eq('id',editingChipId);
+    toast('✅ Chip atualizado!');
+  } else {
+    await sb.from('chips').insert({numero,operadora,status,observacoes});
+    toast('✅ Chip cadastrado!');
+  }
+  editingChipId=null;closeModal('chip');
+  const {data}=await sb.from('chips').select('*').order('created_at',{ascending:false});
+  chips=data||[];renderChips();
+}
+
+async function deleteChip(id){
+  if(!confirm('Excluir este chip?'))return;
+  await sb.from('chips').delete().eq('id',id);
+  const {data}=await sb.from('chips').select('*').order('created_at',{ascending:false});
+  chips=data||[];renderChips();toast('Excluído.');
 }
 
 // ============ EXPORTAR CSV ============
