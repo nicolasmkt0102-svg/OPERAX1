@@ -292,12 +292,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="sidebar-item" onclick="goTab('agenda',this)" id="nav-agenda">
         <span class="sidebar-icon">📅</span><span class="sidebar-label">Agenda</span>
       </div>
+      <div class="sidebar-item" onclick="goTab('criativos',this)" id="nav-criativos">
+        <span class="sidebar-icon">🎯</span><span class="sidebar-label">Criativos</span>
+      </div>
       <div class="sidebar-item" onclick="goTab('chips',this)" id="nav-chips">
         <span class="sidebar-icon">📱</span><span class="sidebar-label">Chips</span>
       </div>
       <div class="sidebar-divider"></div>
       <div class="sidebar-item" onclick="goTab('capi',this)" id="nav-capi">
         <span class="sidebar-icon">⚡</span><span class="sidebar-label">CAPI</span>
+      </div>
+      <div class="sidebar-item" onclick="goTab('crm',this)" id="nav-crm">
+        <span class="sidebar-icon">👥</span><span class="sidebar-label">CRM</span>
       </div>
       <div class="sidebar-item" onclick="goTab('ferramentas',this)" id="nav-ferramentas">
         <span class="sidebar-icon">🛠️</span><span class="sidebar-label">Ferramentas</span>
@@ -657,6 +663,62 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         </div>
       </div>
 
+      <!-- CRIATIVOS -->
+      <div id="pane-criativos" class="pane">
+        <div class="period-tabs">
+          <button class="ptab on" onclick="setCriativoFiltro('todos',this)">Todos</button>
+          <button class="ptab" onclick="setCriativoFiltro('ativo',this)">✅ Ativos</button>
+          <button class="ptab" onclick="setCriativoFiltro('pausado',this)">⏸️ Pausados</button>
+          <button class="ptab" onclick="setCriativoFiltro('inativo',this)">🚫 Inativos</button>
+        </div>
+        <div class="metrics" id="criativos-metrics"></div>
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">🎯 Criativos</span>
+            <button class="btn" onclick="openModal('criativo')">+ Novo criativo</button>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="tbl" style="min-width:760px">
+              <thead><tr>
+                <th style="width:18%">Nome</th><th style="width:10%">Status</th>
+                <th style="width:10%">Gasto</th><th style="width:8%">Leads</th>
+                <th style="width:9%">CPL</th><th style="width:8%">Vendas</th>
+                <th style="width:9%">CPA</th><th style="width:11%">Faturamento</th>
+                <th style="width:7%">ROI</th><th style="width:10%;text-align:right">Ações</th>
+              </tr></thead>
+              <tbody id="criativos-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- CRM -->
+      <div id="pane-crm" class="pane">
+        <div class="period-tabs">
+          <button class="ptab on" onclick="setCrmPeriod('7',this)">7 dias</button>
+          <button class="ptab" onclick="setCrmPeriod('15',this)">15 dias</button>
+          <button class="ptab" onclick="setCrmPeriod('30',this)">30 dias</button>
+          <button class="ptab" onclick="setCrmPeriod('todos',this)">Todos</button>
+        </div>
+        <div class="metrics" id="crm-metrics"></div>
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">👥 CRM — Compradores</span>
+            <input type="text" id="crm-busca" placeholder="Buscar por nome, telefone ou email..." oninput="renderCrm()" style="font-size:12px;padding:5px 10px;border-radius:8px;border:0.5px solid #30363d;background:#0d1117;color:#e6edf3;width:240px">
+          </div>
+          <div style="overflow-x:auto">
+            <table class="tbl" style="min-width:640px">
+              <thead><tr>
+                <th style="width:22%">Nome</th><th style="width:23%">Contato</th>
+                <th style="width:10%">Pedidos</th><th style="width:15%">Total</th>
+                <th style="width:20%">Produtos</th><th style="width:10%">Última compra</th>
+              </tr></thead>
+              <tbody id="crm-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <!-- CONFIGURAÇÕES -->
       <div id="pane-config" class="pane">
         <div style="margin-bottom:16px">
@@ -807,6 +869,33 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
+<div class="overlay" id="overlay-criativo">
+  <div class="modal">
+    <div class="modal-title" id="criativo-title">Novo criativo</div>
+    <div class="field"><label>Nome do criativo</label><input type="text" id="ct-nome" placeholder="Ex: Vídeo depoimento 01"></div>
+    <div class="field"><label>Status</label>
+      <select id="ct-status">
+        <option value="ativo">✅ Ativo</option>
+        <option value="pausado">⏸️ Pausado</option>
+        <option value="inativo">🚫 Inativo</option>
+      </select>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Gasto (R$)</label><input type="number" id="ct-gasto" placeholder="0,00" min="0" step="0.01"></div>
+      <div class="field"><label>Leads</label><input type="number" id="ct-leads" placeholder="0" min="0"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Vendas</label><input type="number" id="ct-vendas" placeholder="0" min="0"></div>
+      <div class="field"><label>Faturamento (R$)</label><input type="number" id="ct-fat" placeholder="0,00" min="0" step="0.01"></div>
+    </div>
+    <div class="field"><label>Observações</label><input type="text" id="ct-obs" placeholder="Ex: link do anúncio, criativo original..."></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('criativo')">Cancelar</button>
+      <button class="btn-ok" id="criativo-btn" onclick="saveCriativo()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="overlay-senha">
   <div class="modal">
     <div class="modal-title">🔑 Trocar senha</div>
@@ -849,10 +938,12 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const fR=v=>'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const pct=v=>Number(v).toFixed(1)+'%';
 
-let dias=[],despesas=[],movCaixa=[],agendamentos=[],chips=[];
+let dias=[],despesas=[],movCaixa=[],agendamentos=[],chips=[],criativos=[];
 let editingId={lancamento:null,despesa:null,caixa:null};
 let editingAgendaId=null;
 let editingChipId=null;
+let editingCriativoId=null;
+let criativoFiltro='todos';
 let usuarioLogado=null;
 let mesSelecionado=new Date().getMonth()+1;
 let anoSelecionado=new Date().getFullYear();
@@ -981,14 +1072,15 @@ function getMesStr(){
 
 // ============ DADOS ============
 async function loadAll(){
-  const [d,de,c,ag,ch]=await Promise.all([
+  const [d,de,c,ag,ch,cr]=await Promise.all([
     sb.from('dias').select('*').order('created_at',{ascending:false}),
     sb.from('despesas').select('*').order('created_at',{ascending:false}),
     sb.from('caixa').select('*').order('created_at',{ascending:false}),
     sb.from('agendamentos').select('*').order('data',{ascending:true}),
     sb.from('chips').select('*').order('created_at',{ascending:false}),
+    sb.from('criativos').select('*').order('created_at',{ascending:false}),
   ]);
-  dias=d.data||[];despesas=de.data||[];movCaixa=c.data||[];agendamentos=ag.data||[];chips=ch.data||[];
+  dias=d.data||[];despesas=de.data||[];movCaixa=c.data||[];agendamentos=ag.data||[];chips=ch.data||[];criativos=cr.data||[];
   // Filtrar dias pelo mês/ano selecionado
   const mesStr=getMesStr();
   dias=dias.filter(d=>{
@@ -1280,6 +1372,100 @@ function renderAgenda(){
     :'<tr><td colspan="6" class="empty">Nenhum agendamento.</td></tr>';
 }
 
+function setCriativoFiltro(f,el){
+  criativoFiltro=f;
+  document.querySelectorAll('#pane-criativos .ptab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');renderCriativos();
+}
+
+function renderCriativos(){
+  let lista=criativos.map(c=>{
+    const cpl=c.leads>0?c.gasto/c.leads:0;
+    const cpa=c.vendas>0?c.gasto/c.vendas:0;
+    const roi=c.gasto>0?((c.fat-c.gasto)/c.gasto)*100:0;
+    return {...c,cpl,cpa,roi};
+  });
+  if(criativoFiltro!=='todos') lista=lista.filter(c=>c.status===criativoFiltro);
+
+  const tG=lista.reduce((s,c)=>s+Number(c.gasto),0);
+  const tF=lista.reduce((s,c)=>s+Number(c.fat),0);
+  const tL=lista.reduce((s,c)=>s+Number(c.leads),0);
+  const tV=lista.reduce((s,c)=>s+Number(c.vendas),0);
+  const roiMedio=tG>0?((tF-tG)/tG)*100:0;
+  const ativos=criativos.filter(c=>c.status==='ativo').length;
+
+  document.getElementById('criativos-metrics').innerHTML=[
+    {cls:'mc',lbl:'Total de criativos',val:criativos.length},
+    {cls:'mc-fat',lbl:'Ativos',val:ativos},
+    {cls:'mc-gasto',lbl:'Gasto total',val:fR(tG)},
+    {cls:'mc-roi',lbl:'ROI médio',val:Math.round(roiMedio)+'%'},
+  ].map(m=>`<div class="${m.cls}"><div class="mc-lbl">${m.lbl}</div><div class="mc-val">${m.val}</div></div>`).join('');
+
+  const statusBadge=s=>s==='ativo'?'b-ok':s==='pausado'?'b-warn':'b-bad';
+  const statusLabel=s=>s==='ativo'?'✅ Ativo':s==='pausado'?'⏸️ Pausado':'🚫 Inativo';
+
+  document.getElementById('criativos-table').innerHTML=lista.length
+    ?lista.map(c=>`<tr>
+        <td style="font-weight:500">${c.nome}</td>
+        <td><span class="badge ${statusBadge(c.status)}">${statusLabel(c.status)}</span></td>
+        <td style="color:#ff7b72;font-weight:600">${fR(c.gasto)}</td>
+        <td>${c.leads}</td>
+        <td>${fR(c.cpl)}</td>
+        <td>${c.vendas}</td>
+        <td>${fR(c.cpa)}</td>
+        <td class="col-fat">${fR(c.fat)}</td>
+        <td><span class="badge ${roiBadge(c.roi)}">${Math.round(c.roi)}%</span></td>
+        <td><div class="actions">
+          <button class="btn-icon btn-edit" onclick="editCriativo('${c.id}')" title="Editar">✏️</button>
+          <button class="btn-icon btn-del" onclick="deleteCriativo('${c.id}')" title="Excluir">🗑️</button>
+        </div></td>
+      </tr>`).join('')
+    :'<tr><td colspan="10" class="empty">Nenhum criativo cadastrado.</td></tr>';
+}
+
+function editCriativo(id){
+  const c=criativos.find(x=>x.id===id);if(!c)return;
+  editingCriativoId=id;
+  document.getElementById('criativo-title').textContent='Editar criativo';
+  document.getElementById('criativo-btn').textContent='Atualizar';
+  document.getElementById('ct-nome').value=c.nome;
+  document.getElementById('ct-status').value=c.status||'ativo';
+  document.getElementById('ct-gasto').value=c.gasto;
+  document.getElementById('ct-leads').value=c.leads;
+  document.getElementById('ct-vendas').value=c.vendas;
+  document.getElementById('ct-fat').value=c.fat;
+  document.getElementById('ct-obs').value=c.obs||'';
+  document.getElementById('overlay-criativo').classList.add('show');
+}
+
+async function saveCriativo(){
+  const nome=document.getElementById('ct-nome').value.trim();
+  const status=document.getElementById('ct-status').value;
+  const gasto=parseFloat(document.getElementById('ct-gasto').value)||0;
+  const leads=parseInt(document.getElementById('ct-leads').value)||0;
+  const vendas=parseInt(document.getElementById('ct-vendas').value)||0;
+  const fat=parseFloat(document.getElementById('ct-fat').value)||0;
+  const obs=document.getElementById('ct-obs').value.trim();
+  if(!nome){toast('Preencha o nome do criativo!');return;}
+  if(editingCriativoId){
+    await sb.from('criativos').update({nome,status,gasto,leads,vendas,fat,obs}).eq('id',editingCriativoId);
+    toast('✅ Criativo atualizado!');
+  } else {
+    await sb.from('criativos').insert({nome,status,gasto,leads,vendas,fat,obs});
+    toast('✅ Criativo cadastrado!');
+  }
+  editingCriativoId=null;closeModal('criativo');
+  const {data}=await sb.from('criativos').select('*').order('created_at',{ascending:false});
+  criativos=data||[];renderCriativos();
+}
+
+async function deleteCriativo(id){
+  if(!confirm('Excluir este criativo?'))return;
+  await sb.from('criativos').delete().eq('id',id);
+  const {data}=await sb.from('criativos').select('*').order('created_at',{ascending:false});
+  criativos=data||[];renderCriativos();toast('Excluído.');
+}
+
 function renderChips(){
   const ativos=chips.filter(c=>c.status==='ativo').length;
   const inativos=chips.filter(c=>c.status==='inativo').length;
@@ -1339,6 +1525,90 @@ async function salvarConfig(){
   statusEl.textContent='✅ Salvo! O n8n já vai usar os novos dados na próxima venda.';
   statusEl.style.color='#3fb950';
   toast('✅ Configurações salvas!');
+}
+
+// ============ CRM ============
+let crmPeriod='7';
+let todosEventosCrm=[];
+
+function setCrmPeriod(p,el){
+  crmPeriod=p;
+  document.querySelectorAll('#pane-crm .ptab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  renderCrm();
+}
+
+async function renderCrm(){
+  if(!todosEventosCrm.length){
+    const {data}=await sb.from('capi_eventos').select('*').order('created_at',{ascending:false}).limit(500);
+    todosEventosCrm=data||[];
+  }
+  let eventos=todosEventosCrm.filter(e=>e.cliente_nome||e.cliente_email||e.cliente_telefone);
+
+  if(crmPeriod!=='todos'){
+    const dias=parseInt(crmPeriod);
+    const limite=new Date();limite.setDate(limite.getDate()-dias);
+    eventos=eventos.filter(e=>{
+      if(!e.created_at)return true;
+      return new Date(e.created_at)>=limite;
+    });
+  }
+
+  // Agrupar por cliente (email ou telefone como chave)
+  const grupos={};
+  eventos.forEach(e=>{
+    const chave=(e.cliente_email||e.cliente_telefone||e.cliente_nome||'desconhecido').toLowerCase();
+    if(!grupos[chave]){
+      grupos[chave]={
+        nome:e.cliente_nome||'—',
+        email:e.cliente_email||'',
+        telefone:e.cliente_telefone||'',
+        pedidos:0,total:0,produtos:new Set(),ultima:e.created_at||e.data
+      };
+    }
+    grupos[chave].pedidos++;
+    grupos[chave].total+=Number(e.valor||0);
+    if(e.produto)grupos[chave].produtos.add(e.produto);
+    if(e.created_at && new Date(e.created_at)>new Date(grupos[chave].ultima)) grupos[chave].ultima=e.created_at;
+  });
+
+  let clientes=Object.values(grupos);
+
+  const busca=(document.getElementById('crm-busca')?.value||'').toLowerCase().trim();
+  if(busca){
+    clientes=clientes.filter(c=>
+      c.nome.toLowerCase().includes(busca)||
+      c.email.toLowerCase().includes(busca)||
+      c.telefone.toLowerCase().includes(busca)
+    );
+  }
+
+  clientes.sort((a,b)=>new Date(b.ultima)-new Date(a.ultima));
+
+  const totalReceita=clientes.reduce((s,c)=>s+c.total,0);
+  const totalPedidos=clientes.reduce((s,c)=>s+c.pedidos,0);
+  const recorrentes=clientes.filter(c=>c.pedidos>1).length;
+
+  document.getElementById('crm-metrics').innerHTML=[
+    {cls:'mc',lbl:'Total de clientes',val:clientes.length},
+    {cls:'mc-fat',lbl:'Receita total',val:fR(totalReceita)},
+    {cls:'mc',lbl:'Total de pedidos',val:totalPedidos},
+    {cls:'mc-roi',lbl:'Clientes recorrentes',val:recorrentes},
+  ].map(m=>`<div class="${m.cls}"><div class="mc-lbl">${m.lbl}</div><div class="mc-val">${m.val}</div></div>`).join('');
+
+  document.getElementById('crm-table').innerHTML=clientes.length
+    ?clientes.map(c=>{
+      const ultimaData=c.ultima?new Date(c.ultima).toLocaleDateString('pt-BR'):'—';
+      return `<tr>
+        <td style="font-weight:500">${c.nome}</td>
+        <td style="color:#8b949e;font-size:11px">${c.telefone?c.telefone+'<br>':''}${c.email||''}</td>
+        <td>${c.pedidos}</td>
+        <td style="color:#3fb950;font-weight:600">${fR(c.total)}</td>
+        <td style="color:#8b949e;font-size:11px;white-space:normal">${[...c.produtos].join(', ')||'—'}</td>
+        <td style="color:#8b949e;font-size:11px">${ultimaData}</td>
+      </tr>`;
+    }).join('')
+    :'<tr><td colspan="6" class="empty">Nenhum cliente encontrado.</td></tr>';
 }
 
 async function renderCapi(){
@@ -1413,8 +1683,10 @@ function goTab(name,el){
   if(name==='financeiro')renderFinanceiro();
   if(name==='caixa')renderCaixa();
   if(name==='agenda')renderAgenda();
+  if(name==='criativos')renderCriativos();
   if(name==='chips')renderChips();
   if(name==='capi')renderCapi();
+  if(name==='crm')renderCrm();
   if(name==='ferramentas')carregarNotas();
   if(name==='config')renderConfig();
 }
@@ -1428,6 +1700,14 @@ function openModal(t){
     ['af-nome','af-plano','af-valor','af-obs'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('af-data').value=new Date().toISOString().split('T')[0];
     document.getElementById('overlay-agenda').classList.add('show');return;
+  }
+  if(t==='criativo'){
+    editingCriativoId=null;
+    document.getElementById('criativo-title').textContent='Novo criativo';
+    document.getElementById('criativo-btn').textContent='Salvar';
+    ['ct-nome','ct-gasto','ct-leads','ct-vendas','ct-fat','ct-obs'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('ct-status').value='ativo';
+    document.getElementById('overlay-criativo').classList.add('show');return;
   }
   if(t==='chip'){
     editingChipId=null;
